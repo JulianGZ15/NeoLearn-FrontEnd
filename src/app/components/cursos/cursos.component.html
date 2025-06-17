@@ -1,0 +1,116 @@
+<p-toolbar class="mb-4">
+  <ng-template pTemplate="start">
+    <p-button label="Nuevo" icon="pi pi-plus" severity="secondary" class="mr-2" (onClick)="openNew()" />
+    <p-button label="Eliminar" icon="pi pi-trash" severity="secondary" outlined (onClick)="deleteSelectedCursos()" [disabled]="!selectedCursos.length" />
+  </ng-template>
+  <ng-template pTemplate="end">
+    <p-button label="Exportar" icon="pi pi-upload" severity="secondary" (onClick)="exportCSV()" />
+  </ng-template>
+</p-toolbar>
+
+<p-table
+  #dt
+  [value]="cursos"
+  [columns]="cols"
+  [paginator]="true"
+  [rows]="10"
+  [rowsPerPageOptions]="[10, 20, 30]"
+  [globalFilterFields]="['titulo', 'descripcion', 'publico_objetivo', 'estado']"
+  [rowHover]="true"
+  dataKey="cveCurso"
+  [(selection)]="selectedCursos"
+  [tableStyle]="{'min-width':'75rem'}"
+  currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} cursos"
+  [showCurrentPageReport]="true"
+>
+  <ng-template pTemplate="caption">
+    <div class="flex items-center justify-between">
+      <h5 class="m-0">Gestión de cursos</h5>
+      <p-iconfield>
+        <p-inputicon styleClass="pi pi-search"></p-inputicon>
+        <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar..." />
+      </p-iconfield>
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="header" let-columns>
+    <tr >
+      <th style="width: 3rem"><p-tableHeaderCheckbox /></th>
+      <th *ngFor="let col of columns"  >{{ col.header }}</th>
+      <th style="width: 8rem"></th>
+    </tr>
+  </ng-template>
+
+  <ng-template pTemplate="body" let-curso let-columns="columns">
+    <tr>
+      <td><p-tableCheckbox [value]="curso"></p-tableCheckbox></td>
+      <td (click)="videos(curso.cveCurso)" *ngFor="let col of columns">
+        <ng-container [ngSwitch]="col.field" >
+          <span *ngSwitchCase="'precio'">{{ curso.precio | currency:'MXN' }}</span>
+          <span *ngSwitchCase="'fecha_publicacion'">{{ curso.fecha_publicacion | date:'shortDate' }}</span>
+          <p-tag *ngSwitchCase="'estado'" [value]="curso.estado" [severity]="getSeverity(curso.estado)"></p-tag>
+          <span *ngSwitchDefault>{{ curso[col.field] }}</span>
+        </ng-container>
+      </td>
+      <td>
+        <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true" (click)="editCurso(curso)" />
+        <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true" (click)="deleteCurso(curso)" />
+
+      </td>
+    </tr>
+  </ng-template>
+
+  <ng-template pTemplate="emptymessage">
+    <tr>
+      <td colspan="100%">No hay cursos registrados.</td>
+    </tr>
+  </ng-template>
+</p-table>
+
+<p-dialog [(visible)]="cursoDialog" [style]="{ width: '450px' }" header="Detalles del curso" [modal]="true" [closable]="false">
+  <div class="flex flex-col gap-4">
+    <div>
+      <label for="titulo" class="block font-bold mb-2">Título</label>
+      <input pInputText id="titulo" [(ngModel)]="curso.titulo" required autofocus />
+      <small class="text-red-500" *ngIf="submitted && !curso.titulo">El título es obligatorio.</small>
+    </div>
+    <div>
+      <label for="descripcion" class="block font-bold mb-2">Descripción</label>
+      <textarea id="descripcion" pTextarea [(ngModel)]="curso.descripcion" rows="3"></textarea>
+    </div>
+    <div>
+      <label for="precio" class="block font-bold mb-2">Precio</label>
+      <p-inputnumber id="precio" [(ngModel)]="curso.precio" mode="currency" currency="USD" locale="es-ES"></p-inputnumber>
+    </div>
+        <div>
+      <label for="estado" class="block font-bold mb-2">Estado</label>
+      <p-select [(ngModel)]="curso.estado" [options]="statuses" optionLabel="label" optionValue="value" placeholder="Selecciona un estado"></p-select>
+    </div>
+    <div >
+      <label for="es_gratis" class="block font-bold mb-2">¿Es gratis?</label>
+    </div>
+      <div class="flex flex-wrap gap-2">
+        <div>
+          <p-radiobutton name="es_gratis" [value]="true" [(ngModel)]="curso.es_gratis" inputId="gratis"></p-radiobutton>
+                  <label for="gratis" class="ml-2">Si</label>
+        </div>
+        <div>
+          <p-radiobutton name="es_gratis" [value]="false" [(ngModel)]="curso.es_gratis" inputId="noGratis"></p-radiobutton>
+                            <label for="noGratis" class="ml-2">No</label>
+
+        </div>
+    </div>
+    <div>
+      <label for="publico_objetivo" class="block font-bold mb-2">Público Objetivo</label>
+      <input pInputText id="publico_objetivo" [(ngModel)]="curso.publico_objetivo" />
+    </div>
+
+  </div>
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" icon="pi pi-times" text (onClick)="hideDialog()" />
+    <p-button label="Guardar" icon="pi pi-check" (onClick)="saveCurso()" />
+  </ng-template>
+</p-dialog>
+
+<p-confirmdialog [style]="{ width: '450px' }"></p-confirmdialog>
+<p-toast></p-toast>

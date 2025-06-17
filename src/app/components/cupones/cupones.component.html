@@ -1,0 +1,120 @@
+<p-toolbar class="mb-4">
+  <ng-template pTemplate="start">
+    <p-button label="Nuevo" icon="pi pi-plus" severity="secondary" class="mr-2" (onClick)="openNew()" />
+    <p-button label="Eliminar" icon="pi pi-trash" severity="secondary" outlined (onClick)="deleteSelectedCupones()" [disabled]="!selectedCupones.length" />
+  </ng-template>
+  <ng-template pTemplate="end">
+    <p-button label="Exportar" icon="pi pi-upload" severity="secondary" (onClick)="exportCSV()" />
+  </ng-template>
+</p-toolbar>
+
+<p-table
+  #dt
+  [value]="cupones"
+  [columns]="cols"
+  [paginator]="true"
+  [rows]="10"
+  [rowsPerPageOptions]="[10, 20, 30]"
+  [globalFilterFields]="['codigo']"
+  [rowHover]="true"
+  dataKey="cveCupon"
+  [(selection)]="selectedCupones"
+  [tableStyle]="{'min-width':'60rem'}"
+  currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} cupones"
+  [showCurrentPageReport]="true"
+>
+  <ng-template pTemplate="caption">
+    <div class="flex items-center justify-between">
+      <h5 class="m-0">Gestión de cupones del curso</h5>
+      <p-iconfield>
+        <p-inputicon styleClass="pi pi-search"></p-inputicon>
+        <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar..." />
+      </p-iconfield>
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="header" let-columns>
+    <tr>
+      <th style="width: 3rem"><p-tableHeaderCheckbox /></th>
+      <th *ngFor="let col of columns">{{ col.header }}</th>
+      <th style="width: 8rem"></th>
+    </tr>
+  </ng-template>
+
+  <ng-template pTemplate="body" let-cupon let-columns="columns">
+    <tr>
+      <td><p-tableCheckbox [value]="cupon"></p-tableCheckbox></td>
+      <td *ngFor="let col of columns">
+        <ng-container [ngSwitch]="col.field">
+          <span *ngSwitchCase="'fecha_inicio'">{{ cupon.fecha_inicio | date:'shortDate' }}</span>
+          <span *ngSwitchCase="'fecha_fin'">{{ cupon.fecha_fin | date:'shortDate' }}</span>
+          <span *ngSwitchCase="'descuento_porcentaje'">{{ cupon.descuento_porcentaje }}%</span>
+          <span *ngSwitchCase="'descuento_fijo'">{{ cupon.descuento_fijo | currency:'MXN' }}</span>
+          <span *ngSwitchDefault>{{ cupon[col.field] }}</span>
+        </ng-container>
+      </td>
+      <td>
+        <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true" (click)="editCupon(cupon)" />
+        <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true" (click)="deleteCupon(cupon)" />
+      </td>
+    </tr>
+  </ng-template>
+
+  <ng-template pTemplate="emptymessage">
+    <tr>
+      <td colspan="100%">No hay cupones registrados para este curso.</td>
+    </tr>
+  </ng-template>
+</p-table>
+
+<p-dialog [(visible)]="cuponDialog" [style]="{ width: '450px' }" header="Detalles del cupón" [modal]="true" [closable]="false">
+  <div class="flex flex-col gap-4">
+    <div>
+      <label for="codigo" class="block font-bold mb-2">Código</label>
+      <input pInputText id="codigo" [(ngModel)]="cupon.codigo" required />
+      <small class="text-red-500" *ngIf="submitted && !cupon.codigo">El código es obligatorio.</small>
+    </div>
+    <div>
+      <label for="descuento_porcentaje" class="block font-bold mb-2">% Descuento</label>
+      <p-inputnumber id="descuento_porcentaje" [(ngModel)]="cupon.descuento_porcentaje" mode="decimal" min="0" max="100"></p-inputnumber>
+    </div>
+    <div>
+      <label for="descuento_fijo" class="block font-bold mb-2">Descuento Fijo</label>
+      <p-inputnumber id="descuento_fijo" [(ngModel)]="cupon.descuento_fijo" mode="currency" currency="MXN" locale="es-MX"></p-inputnumber>
+    </div>
+    <div>
+      <label for="fecha_inicio" class="block font-bold mb-2">Fecha de inicio</label>
+      <p-calendar
+        id="fecha_inicio"
+        [(ngModel)]="cupon.fecha_inicio"
+        dateFormat="yy-mm-dd"
+        showIcon="true"
+        [showButtonBar]="true"
+        placeholder="Selecciona fecha de inicio"
+      ></p-calendar>
+    </div>
+    <div>
+      <label for="fecha_fin" class="block font-bold mb-2">Fecha de fin</label>
+      <p-calendar
+        id="fecha_fin"
+        [(ngModel)]="cupon.fecha_fin"
+        dateFormat="yy-mm-dd"
+        showIcon="true"
+        [showButtonBar]="true"
+        placeholder="Selecciona fecha de fin"
+      ></p-calendar>
+    </div>
+    <div>
+      <label for="usos_disponibles" class="block font-bold mb-2">Usos disponibles</label>
+      <p-inputnumber id="usos_disponibles" [(ngModel)]="cupon.usos_disponibles" mode="decimal" min="0"></p-inputnumber>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" icon="pi pi-times" text (onClick)="hideDialog()" />
+    <p-button label="Guardar" icon="pi pi-check" (onClick)="saveCupon()" />
+  </ng-template>
+</p-dialog>
+
+
+<p-confirmdialog [style]="{ width: '450px' }"></p-confirmdialog>
+<p-toast></p-toast>

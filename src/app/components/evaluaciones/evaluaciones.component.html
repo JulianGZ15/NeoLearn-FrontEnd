@@ -1,0 +1,86 @@
+<p-toolbar class="mb-4">
+  <ng-template pTemplate="start">
+    <p-button label="Nuevo" icon="pi pi-plus" severity="secondary" class="mr-2" (onClick)="openNew()" />
+    <p-button label="Eliminar" icon="pi pi-trash" severity="secondary" outlined (onClick)="deleteSelectedEvaluaciones()" [disabled]="!selectedEvaluaciones.length" />
+  </ng-template>
+  <ng-template pTemplate="end">
+    <p-button label="Exportar" icon="pi pi-upload" severity="secondary" (onClick)="exportCSV()" />
+  </ng-template>
+</p-toolbar>
+
+<p-table
+  #dt
+  [value]="evaluaciones"
+  [columns]="cols"
+  [paginator]="true"
+  [rows]="10"
+  [rowsPerPageOptions]="[10, 20, 30]"
+  [globalFilterFields]="['titulo']"
+  [rowHover]="true"
+  dataKey="cveEvaluacion"
+  [(selection)]="selectedEvaluaciones"
+  [tableStyle]="{'min-width':'40rem'}"
+  currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} evaluaciones"
+  [showCurrentPageReport]="true"
+>
+  <ng-template pTemplate="caption">
+    <div class="flex items-center justify-between">
+      <h5 class="m-0">Gestión de evaluaciones del curso</h5>
+      <p-iconfield>
+        <p-inputicon styleClass="pi pi-search"></p-inputicon>
+        <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar..." />
+      </p-iconfield>
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="header" let-columns>
+    <tr>
+      <th style="width: 3rem"><p-tableHeaderCheckbox /></th>
+      <th *ngFor="let col of columns">{{ col.header }}</th>
+      <th style="width: 8rem"></th>
+    </tr>
+  </ng-template>
+
+  <ng-template pTemplate="body" let-evaluacion let-columns="columns">
+    <tr>
+      <td><p-tableCheckbox [value]="evaluacion"></p-tableCheckbox></td>
+      <td (click)="preguntas(evaluacion.cveEvaluacion)" *ngFor="let col of columns">
+        <ng-container [ngSwitch]="col.field">
+          <span *ngSwitchCase="'duracion_minutos'">{{ evaluacion.duracion_minutos }} min</span>
+          <span *ngSwitchDefault>{{ evaluacion[col.field] }}</span>
+        </ng-container>
+      </td>
+      <td>
+        <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true" (click)="editEvaluacion(evaluacion)" />
+        <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true" (click)="deleteEvaluacion(evaluacion)" />
+      </td>
+    </tr>
+  </ng-template>
+
+  <ng-template pTemplate="emptymessage">
+    <tr>
+      <td colspan="100%">No hay evaluaciones registradas para este curso.</td>
+    </tr>
+  </ng-template>
+</p-table>
+
+<p-dialog [(visible)]="evaluacionDialog" [style]="{ width: '450px' }" header="Detalles de la evaluación" [modal]="true" [closable]="false">
+  <div class="flex flex-col gap-4">
+    <div>
+      <label for="titulo" class="block font-bold mb-2">Título</label>
+      <input pInputText id="titulo" [(ngModel)]="evaluacion.titulo" required autofocus />
+      <small class="text-red-500" *ngIf="submitted && !evaluacion.titulo">El título es obligatorio.</small>
+    </div>
+    <div>
+      <label for="duracion_minutos" class="block font-bold mb-2">Duración (minutos)</label>
+      <p-inputnumber id="duracion_minutos" [(ngModel)]="evaluacion.duracion_minutos" [min]="1"></p-inputnumber>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" icon="pi pi-times" text (onClick)="hideDialog()" />
+    <p-button label="Guardar" icon="pi pi-check" (onClick)="saveEvaluacion()" />
+  </ng-template>
+</p-dialog>
+
+<p-confirmdialog [style]="{ width: '450px' }"></p-confirmdialog>
+<p-toast></p-toast>

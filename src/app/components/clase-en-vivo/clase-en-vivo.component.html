@@ -1,0 +1,69 @@
+<div class="videoconferencia-container">
+  <div class="video-header">
+    <h2>{{ clase.titulo }}</h2>
+    <p-tag [value]="connectionState" [severity]="connectionState === 'connected' ? 'success' : 'warning'"></p-tag>
+  </div>
+
+  <div class="video-grid">
+    <!-- Video local -->
+    <div class="video-container local-video">
+      <video #localVideo autoplay muted playsinline></video>
+      <div class="video-label">Tú</div>
+    </div>
+
+    <!-- Video remoto -->
+    <div class="video-container remote-video">
+      <video #remoteVideo autoplay playsinline></video>
+      <div class="video-label">Instructor</div>
+    </div>
+  </div>
+
+  <!-- Controles -->
+  <div class="controls-panel">
+    <p-button 
+      *ngIf="isInstructor && connectionState === 'disconnected'"
+      label="Iniciar Clase" 
+      icon="pi pi-play" 
+      (onClick)="iniciarClase()">
+    </p-button>
+
+    <p-button 
+      *ngIf="!isInstructor && connectionState === 'disconnected'"
+      label="Unirse a Clase" 
+      icon="pi pi-sign-in" 
+      (onClick)="unirseAClase()">
+    </p-button>
+
+    <div *ngIf="connectionState !== 'disconnected'" class="active-controls">
+      <p-button 
+        [icon]="isVideoEnabled ? 'pi pi-video' : 'pi pi-eye-slash'"
+        [severity]="isVideoEnabled ? 'secondary' : 'danger'"
+        (onClick)="toggleVideo()">
+      </p-button>
+
+      <p-button 
+        [icon]="isAudioEnabled ? 'pi pi-volume-up' : 'pi pi-volume-off'"
+        [severity]="isAudioEnabled ? 'secondary' : 'danger'"
+        (onClick)="toggleAudio()">
+      </p-button>
+
+      <p-button 
+        *ngIf="isInstructor"
+        label="Finalizar Clase" 
+        icon="pi pi-stop" 
+        severity="danger"
+        (onClick)="finalizarClase()">
+      </p-button>
+
+      <p-button 
+        *ngIf="!isInstructor"
+        label="Salir" 
+        icon="pi pi-sign-out" 
+        severity="danger"
+        (onClick)="salirDeClase()">
+      </p-button>
+    </div>
+  </div>
+</div>
+
+<p-toast></p-toast>

@@ -1,0 +1,81 @@
+<p-toolbar class="mb-4">
+  <ng-template pTemplate="end">
+    <p-button label="Exportar" icon="pi pi-upload" severity="secondary" (onClick)="exportCSV()" />
+  </ng-template>
+</p-toolbar>
+
+<p-table
+  #dt
+  [value]="preguntas"
+  [columns]="cols"
+  [paginator]="true"
+  [rows]="10"
+  [rowsPerPageOptions]="[10, 20, 30]"
+  [globalFilterFields]="['contenido','usuarioNombre','fecha','respuestaContenido']"
+  [rowHover]="true"
+  dataKey="cvePregunta"
+  [tableStyle]="{'min-width':'80rem'}"
+  currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} preguntas"
+  [showCurrentPageReport]="true"
+>
+  <ng-template pTemplate="caption">
+    <div class="flex items-center justify-between">
+      <h5 class="m-0">Preguntas del curso</h5>
+      <p-iconfield>
+        <p-inputicon styleClass="pi pi-search"></p-inputicon>
+        <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar..." />
+      </p-iconfield>
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="header" let-columns>
+    <tr>
+      <th *ngFor="let col of columns">{{ col.header }}</th>
+      <th style="width: 8rem"></th>
+    </tr>
+  </ng-template>
+
+  <ng-template pTemplate="body" let-pregunta let-columns="columns">
+    <tr>
+      <td *ngFor="let col of columns">
+        <ng-container [ngSwitch]="col.field">
+          <span *ngSwitchCase="'fecha'">{{ pregunta.fecha | date:'short' }}</span>
+          <span *ngSwitchCase="'respuestaContenido'">
+            <span *ngIf="pregunta.respuestaContenido === 'Aún sin respuesta'" class="text-gray-400 italic">{{ pregunta.respuestaContenido }}</span>
+            <span *ngIf="pregunta.respuestaContenido !== 'Aún sin respuesta'">{{ pregunta.respuestaContenido }}</span>
+          </span>
+          <span *ngSwitchDefault>{{ pregunta[col.field] }}</span>
+        </ng-container>
+      </td>
+      <td>
+        <p-button icon="pi pi-reply" label="Responder" class="p-button-sm" (click)="responderPregunta(pregunta)" />
+      </td>
+    </tr>
+  </ng-template>
+
+  <ng-template pTemplate="emptymessage">
+    <tr>
+      <td colspan="100%">No hay preguntas registradas para este curso.</td>
+    </tr>
+  </ng-template>
+</p-table>
+
+<p-dialog [(visible)]="respuestaDialog" [style]="{ width: '450px' }" header="Responder pregunta" [modal]="true" [closable]="false">
+  <div class="flex flex-col gap-4">
+    <div>
+      <label class="block font-bold mb-2">Pregunta</label>
+      <div class="bg-gray-100 p-2 rounded">{{ preguntaSeleccionada?.contenido }}</div>
+    </div>
+    <div>
+      <label for="respuesta" class="block font-bold mb-2">Tu respuesta</label>
+      <textarea id="respuesta" pTextarea [(ngModel)]="respuesta.contenido" rows="4"></textarea>
+      <small class="text-red-500" *ngIf="submitted && !respuesta.contenido">La respuesta es obligatoria.</small>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" icon="pi pi-times" text (onClick)="respuestaDialog = false" />
+    <p-button label="Enviar" icon="pi pi-check" (onClick)="guardarRespuesta()" />
+  </ng-template>
+</p-dialog>
+
+<p-toast></p-toast>

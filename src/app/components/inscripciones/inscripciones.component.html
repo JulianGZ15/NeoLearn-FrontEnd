@@ -1,0 +1,110 @@
+<p-toolbar class="mb-4">
+  <ng-template pTemplate="start">
+    <p-button label="Nuevo" icon="pi pi-plus" severity="secondary" class="mr-2" (onClick)="openNew()" />
+    <p-button label="Eliminar" icon="pi pi-trash" severity="secondary" outlined (onClick)="deleteSelectedInscripciones()" [disabled]="!selectedInscripciones.length" />
+  </ng-template>
+  <ng-template pTemplate="end">
+    <p-button label="Exportar" icon="pi pi-upload" severity="secondary" (onClick)="exportCSV()" />
+  </ng-template>
+</p-toolbar>
+
+<p-table
+  #dt
+  [value]="inscripciones"
+  [columns]="cols"
+  [paginator]="true"
+  [rows]="10"
+  [rowsPerPageOptions]="[10, 20, 30]"
+  [globalFilterFields]="['usuarioNombre', 'metodo_pago', 'estado']"
+  [rowHover]="true"
+  dataKey="cveInscripcion"
+  [(selection)]="selectedInscripciones"
+  [tableStyle]="{'min-width':'60rem'}"
+  currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} inscripciones"
+  [showCurrentPageReport]="true"
+>
+  <ng-template pTemplate="caption">
+    <div class="flex items-center justify-between">
+      <h5 class="m-0">Gestión de inscripciones del curso</h5>
+      <p-iconfield>
+        <p-inputicon styleClass="pi pi-search"></p-inputicon>
+        <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar..." />
+      </p-iconfield>
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="header" let-columns>
+    <tr>
+      <th style="width: 3rem"><p-tableHeaderCheckbox /></th>
+      <th *ngFor="let col of columns">{{ col.header }}</th>
+      <th style="width: 8rem"></th>
+    </tr>
+  </ng-template>
+
+  <ng-template pTemplate="body" let-inscripcion let-columns="columns">
+    <tr>
+      <td><p-tableCheckbox [value]="inscripcion"></p-tableCheckbox></td>
+      <td *ngFor="let col of columns">
+        <ng-container [ngSwitch]="col.field">
+          <span *ngSwitchCase="'usuarioNombre'">{{ inscripcion.usuarioNombre || 'Cargando...' }}</span>
+          <span *ngSwitchCase="'fecha_inscripcion'">{{ inscripcion.fecha_inscripcion | date:'short' }}</span>
+          <span *ngSwitchCase="'precio_pagado'">{{ inscripcion.precio_pagado | currency:'MXN' }}</span>
+          <p-tag *ngSwitchCase="'estado'" [value]="inscripcion.estado" [severity]="getSeverity(inscripcion.estado)"></p-tag>
+          <span *ngSwitchDefault>{{ inscripcion[col.field] }}</span>
+        </ng-container>
+      </td>
+      <td>
+        <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true" (click)="editInscripcion(inscripcion)" />
+        <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true" (click)="deleteInscripcion(inscripcion)" />
+      </td>
+    </tr>
+  </ng-template>
+
+  <ng-template pTemplate="emptymessage">
+    <tr>
+      <td colspan="100%">No hay inscripciones registradas para este curso.</td>
+    </tr>
+  </ng-template>
+</p-table>
+
+<p-dialog [(visible)]="inscripcionDialog" [style]="{ width: '450px' }" header="Detalles de la inscripción" [modal]="true" [closable]="false">
+  <div class="flex flex-col gap-4">
+    <div>
+      <label for="usuarioId" class="block font-bold mb-2">ID Usuario</label>
+      <input pInputText id="usuarioId" [(ngModel)]="inscripcion.usuarioId" required />
+      <small class="text-red-500" *ngIf="submitted && !inscripcion.usuarioId">El usuario es obligatorio.</small>
+    </div>
+    <div>
+      <label for="fecha_inscripcion" class="block font-bold mb-2">Fecha de inscripción</label>
+      <input pInputText id="fecha_inscripcion" [(ngModel)]="inscripcion.fecha_inscripcion" placeholder="YYYY-MM-DD" />
+    </div>
+    <div>
+      <label for="precio_pagado" class="block font-bold mb-2">Precio Pagado</label>
+      <p-inputnumber id="precio_pagado" [(ngModel)]="inscripcion.precio_pagado" mode="currency" currency="MXN" locale="es-MX"></p-inputnumber>
+    </div>
+    <div>
+      <label for="metodo_pago" class="block font-bold mb-2">Método de Pago</label>
+      <input pInputText id="metodo_pago" [(ngModel)]="inscripcion.metodo_pago" />
+    </div>
+    <div>
+      <label for="estado" class="block font-bold mb-2">Estado</label>
+      <p-select [(ngModel)]="inscripcion.estado" 
+        [options]="[
+          {label: 'Activa', value: 'ACTIVA'},
+          {label: 'Pendiente', value: 'PENDIENTE'},
+          {label: 'Cancelada', value: 'CANCELADA'}
+        ]"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Selecciona un estado"
+      ></p-select>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" icon="pi pi-times" text (onClick)="hideDialog()" />
+    <p-button label="Guardar" icon="pi pi-check" (onClick)="saveInscripcion()" />
+  </ng-template>
+</p-dialog>
+
+<p-confirmdialog [style]="{ width: '450px' }"></p-confirmdialog>
+<p-toast></p-toast>

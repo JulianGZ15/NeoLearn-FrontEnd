@@ -1,0 +1,97 @@
+<p-toolbar class="mb-4">
+  <ng-template pTemplate="start">
+    <p-button label="Nuevo" icon="pi pi-plus" severity="secondary" class="mr-2" (onClick)="openNew()" />
+    <p-button label="Eliminar" icon="pi pi-trash" severity="secondary" outlined (onClick)="deleteSelectedVideos()" [disabled]="!selectedVideos.length" />
+  </ng-template>
+  <ng-template pTemplate="end">
+    <p-button label="Exportar" icon="pi pi-upload" severity="secondary" (onClick)="exportCSV()" />
+  </ng-template>
+</p-toolbar>
+
+<p-table
+  #dt
+  [value]="videos"
+  [columns]="cols"
+  [paginator]="true"
+  [rows]="10"
+  [rowsPerPageOptions]="[10, 20, 30]"
+  [globalFilterFields]="['titulo', 'url']"
+  [rowHover]="true"
+  dataKey="cveVideo"
+  [(selection)]="selectedVideos"
+  [tableStyle]="{'min-width':'60rem'}"
+  currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} vídeos"
+  [showCurrentPageReport]="true"
+>
+  <ng-template pTemplate="caption">
+    <div class="flex items-center justify-between">
+      <h5 class="m-0">Gestión de vídeos del curso</h5>
+      <p-iconfield>
+        <p-inputicon styleClass="pi pi-search"></p-inputicon>
+        <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar..." />
+      </p-iconfield>
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="header" let-columns>
+    <tr>
+      <th style="width: 3rem"><p-tableHeaderCheckbox /></th>
+      <th *ngFor="let col of columns">{{ col.header }}</th>
+      <th style="width: 8rem"></th>
+    </tr>
+  </ng-template>
+
+  <ng-template pTemplate="body" let-video let-columns="columns">
+    <tr>
+      <td><p-tableCheckbox [value]="video"></p-tableCheckbox></td>
+      <td *ngFor="let col of columns">
+        <ng-container [ngSwitch]="col.field">
+          <span *ngSwitchCase="'duracion_minutos'">{{ video.duracion_minutos }} min</span>
+          <span *ngSwitchCase="'url'">
+            <a [href]="video.url" target="_blank">{{ video.url }}</a>
+          </span>
+          <span *ngSwitchDefault>{{ video[col.field] }}</span>
+        </ng-container>
+      </td>
+      <td>
+        <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true" (click)="editVideo(video)" />
+        <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true" (click)="deleteVideo(video)" />
+      </td>
+    </tr>
+  </ng-template>
+
+  <ng-template pTemplate="emptymessage">
+    <tr>
+      <td colspan="100%">No hay vídeos registrados para este curso.</td>
+    </tr>
+  </ng-template>
+</p-table>
+
+<p-dialog [(visible)]="videoDialog" [style]="{ width: '450px' }" header="Detalles del vídeo" [modal]="true" [closable]="false">
+  <div class="flex flex-col gap-4">
+    <div>
+      <label for="titulo" class="block font-bold mb-2">Título</label>
+      <input pInputText id="titulo" [(ngModel)]="video.titulo" required autofocus />
+      <small class="text-red-500" *ngIf="submitted && !video.titulo">El título es obligatorio.</small>
+    </div>
+    <div>
+      <label for="url" class="block font-bold mb-2">URL</label>
+      <input pInputText id="url" [(ngModel)]="video.url" required />
+    </div>
+    <div>
+      <label for="duracion_minutos" class="block font-bold mb-2">Duración (minutos)</label>
+      <p-inputnumber id="duracion_minutos" [(ngModel)]="video.duracion_minutos" [min]="1"></p-inputnumber>
+    </div>
+    <div>
+      <label for="orden" class="block font-bold mb-2">Orden</label>
+      <p-inputnumber id="orden" [(ngModel)]="video.orden" [min]="1"></p-inputnumber>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" icon="pi pi-times" text (onClick)="hideDialog()" />
+    <p-button label="Guardar" icon="pi pi-check" (onClick)="saveVideo()" />
+  </ng-template>
+</p-dialog>
+
+<p-confirmdialog [style]="{ width: '450px' }"></p-confirmdialog>
+<p-toast></p-toast>

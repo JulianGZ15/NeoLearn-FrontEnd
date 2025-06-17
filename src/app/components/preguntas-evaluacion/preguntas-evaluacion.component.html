@@ -1,0 +1,119 @@
+<p-toolbar class="mb-4">
+  <ng-template pTemplate="start">
+    <p-button label="Nueva" icon="pi pi-plus" severity="secondary" class="mr-2" (onClick)="openNew()" />
+    <p-button label="Eliminar" icon="pi pi-trash" severity="secondary" outlined (onClick)="deleteSelectedPreguntas()" [disabled]="!selectedPreguntas.length" />
+  </ng-template>
+  <ng-template pTemplate="end">
+    <p-button label="Exportar" icon="pi pi-upload" severity="secondary" (onClick)="exportCSV()" />
+  </ng-template>
+</p-toolbar>
+
+<p-table
+  #dt
+  [value]="preguntas"
+  [columns]="cols"
+  [paginator]="true"
+  [rows]="10"
+  [rowsPerPageOptions]="[10, 20, 30]"
+  [globalFilterFields]="['pregunta','opcion_a','opcion_b','opcion_c','opcion_d','respuesta_correcta']"
+  [rowHover]="true"
+  dataKey="cvePreguntaEvaluacion"
+  [(selection)]="selectedPreguntas"
+  [tableStyle]="{'min-width':'80rem'}"
+  currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} preguntas"
+  [showCurrentPageReport]="true"
+>
+  <ng-template pTemplate="caption">
+    <div class="flex items-center justify-between">
+      <h5 class="m-0">Preguntas de la evaluación</h5>
+      <p-iconfield>
+        <p-inputicon styleClass="pi pi-search"></p-inputicon>
+        <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar..." />
+      </p-iconfield>
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="header" let-columns>
+    <tr>
+      <th style="width: 3rem"><p-tableHeaderCheckbox /></th>
+      <th *ngFor="let col of columns">{{ col.header }}</th>
+      <th style="width: 8rem"></th>
+    </tr>
+  </ng-template>
+
+  <ng-template pTemplate="body" let-pregunta let-columns="columns">
+    <tr>
+      <td><p-tableCheckbox [value]="pregunta"></p-tableCheckbox></td>
+      <td *ngFor="let col of columns">
+        <span>{{ pregunta[col.field] }}</span>
+      </td>
+      <td>
+        <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true" (click)="editPregunta(pregunta)" />
+        <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true" (click)="deletePregunta(pregunta)" />
+      </td>
+    </tr>
+  </ng-template>
+
+  <ng-template pTemplate="emptymessage">
+    <tr>
+      <td colspan="100%">No hay preguntas registradas para esta evaluación.</td>
+    </tr>
+  </ng-template>
+</p-table>
+
+<p-dialog [(visible)]="preguntaDialog" [style]="{ width: '600px' }" header="Detalles de la pregunta" [modal]="true" [closable]="false">
+  <div class="flex flex-col gap-4">
+    <div>
+      <label for="pregunta" class="block font-bold mb-2">Pregunta</label>
+      <input pInputText id="pregunta" [(ngModel)]="pregunta.pregunta" required autofocus />
+      <small class="text-red-500" *ngIf="submitted && !pregunta.pregunta">La pregunta es obligatoria.</small>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label for="opcion_a" class="block font-bold mb-2">Opción A</label>
+        <input pInputText id="opcion_a" [(ngModel)]="pregunta.opcion_a" required />
+      </div>
+      <div>
+        <label for="opcion_b" class="block font-bold mb-2">Opción B</label>
+        <input pInputText id="opcion_b" [(ngModel)]="pregunta.opcion_b" required />
+      </div>
+      <div>
+        <label for="opcion_c" class="block font-bold mb-2">Opción C</label>
+        <input pInputText id="opcion_c" [(ngModel)]="pregunta.opcion_c" required />
+      </div>
+      <div>
+        <label for="opcion_d" class="block font-bold mb-2">Opción D</label>
+        <input pInputText id="opcion_d" [(ngModel)]="pregunta.opcion_d" required />
+      </div>
+    </div>
+    <div>
+      <label class="block font-bold mb-2">Respuesta Correcta</label>
+      <div class="flex gap-6">
+        <div class="flex items-center">
+          <p-radiobutton name="respuesta" inputId="respuestaA" value="A" [(ngModel)]="pregunta.respuesta_correcta"></p-radiobutton>
+          <label for="respuestaA" class="ml-2">A</label>
+        </div>
+        <div class="flex items-center">
+          <p-radiobutton name="respuesta" inputId="respuestaB" value="B" [(ngModel)]="pregunta.respuesta_correcta"></p-radiobutton>
+          <label for="respuestaB" class="ml-2">B</label>
+        </div>
+        <div class="flex items-center">
+          <p-radiobutton name="respuesta" inputId="respuestaC" value="C" [(ngModel)]="pregunta.respuesta_correcta"></p-radiobutton>
+          <label for="respuestaC" class="ml-2">C</label>
+        </div>
+        <div class="flex items-center">
+          <p-radiobutton name="respuesta" inputId="respuestaD" value="D" [(ngModel)]="pregunta.respuesta_correcta"></p-radiobutton>
+          <label for="respuestaD" class="ml-2">D</label>
+        </div>
+      </div>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" icon="pi pi-times" text (onClick)="hideDialog()" />
+    <p-button label="Guardar" icon="pi pi-check" (onClick)="savePregunta()" />
+  </ng-template>
+</p-dialog>
+
+
+<p-confirmdialog [style]="{ width: '450px' }"></p-confirmdialog>
+<p-toast></p-toast>

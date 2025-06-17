@@ -1,0 +1,102 @@
+<!-- Banner informativo -->
+<div class="p-3 mb-4 rounded bg-blue-50 text-blue-800 border border-blue-200 flex items-center gap-2">
+  <i class="pi pi-info-circle"></i>
+  <span>
+    Los enlaces de invitación tienen un vencimiento de <b>3 días</b> desde su creación. Después de ese tiempo, se vuelven inactivos automáticamente.
+  </span>
+</div>
+
+<p-toolbar class="mb-4">
+  <ng-template pTemplate="start">
+    <p-button 
+      label="Generar invitación" 
+      icon="pi pi-plus" 
+      severity="secondary" 
+      class="mr-2" 
+      (onClick)="generarInvitacion()" 
+      [loading]="generando"
+    />
+    <span class="ml-4">
+      <p-select 
+        [options]="[
+          {label: 'Todos', value: 'todos'},
+          {label: 'Activos', value: 'activo'},
+          {label: 'Inactivos', value: 'inactivo'}
+        ]"
+        [(ngModel)]="filtroEstatus"
+        (onChange)="aplicarFiltroEstatus()"
+        placeholder="Filtrar por estatus"
+        styleClass="w-36"
+      ></p-select>
+    </span>
+  </ng-template>
+  <ng-template pTemplate="end">
+    <p-button label="Exportar" icon="pi pi-upload" severity="secondary" (onClick)="exportCSV()" />
+  </ng-template>
+</p-toolbar>
+
+<p-table
+  #dt
+  [value]="invitacionesFiltradas"
+  [columns]="cols"
+  [paginator]="true"
+  [rows]="10"
+  [rowsPerPageOptions]="[10, 20, 30]"
+  [rowHover]="true"
+  dataKey="cveToken"
+  [tableStyle]="{'min-width':'60rem'}"
+  currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} invitaciones"
+  [showCurrentPageReport]="true"
+>
+  <ng-template pTemplate="caption">
+    <div class="flex items-center justify-between">
+      <h5 class="m-0">Gestión de invitaciones de empresa</h5>
+      <p-iconfield>
+        <p-inputicon styleClass="pi pi-search"></p-inputicon>
+        <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar..." />
+      </p-iconfield>
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="header" let-columns>
+    <tr>
+      <th *ngFor="let col of columns">{{ col.header }}</th>
+      <th style="width: 10rem"></th>
+    </tr>
+  </ng-template>
+
+  <ng-template pTemplate="body" let-invitacion let-columns="columns">
+    <tr>
+      <td *ngFor="let col of columns">
+        <ng-container [ngSwitch]="col.field">
+          <span *ngSwitchCase="'fechaCreacion'">{{ invitacion.fechaCreacion | date:'short' }}</span>
+          <span *ngSwitchCase="'fechaExpiracion'">{{ invitacion.fechaExpiracion | date:'short' }}</span>
+          <span *ngSwitchCase="'estatus'">
+            <p-tag 
+              [value]="invitacion.usado ? 'Inactivo' : 'Activo'" 
+              [severity]="invitacion.usado ? 'danger' : 'success'">
+            </p-tag>
+          </span>
+          <span *ngSwitchCase="'token'">{{ invitacion.token }}</span>
+          <span *ngSwitchDefault>{{ invitacion[col.field] }}</span>
+        </ng-container>
+      </td>
+      <td>
+        <p-button 
+          icon="pi pi-copy" 
+          label="Copiar enlace" 
+          [rounded]="true" 
+          [outlined]="true" 
+          (click)="copiarToken(invitacion.token!)" />
+      </td>
+    </tr>
+  </ng-template>
+
+  <ng-template pTemplate="emptymessage">
+    <tr>
+      <td colspan="100%">No hay invitaciones registradas.</td>
+    </tr>
+  </ng-template>
+</p-table>
+
+<p-toast></p-toast>
