@@ -13,102 +13,264 @@
   [value]="cursos"
   [columns]="cols"
   [paginator]="true"
-  [rows]="10"
-  [rowsPerPageOptions]="[10, 20, 30]"
+  [rows]="8"
+  [rowsPerPageOptions]="[8, 16, 24]"
   [globalFilterFields]="['titulo', 'descripcion', 'publico_objetivo', 'estado']"
   [rowHover]="true"
   dataKey="cveCurso"
   [(selection)]="selectedCursos"
-  [tableStyle]="{'min-width':'75rem'}"
+  [tableStyle]="{'min-width':'85rem'}"
   currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} cursos"
   [showCurrentPageReport]="true"
+  styleClass="p-datatable-gridlines"
 >
   <ng-template pTemplate="caption">
     <div class="flex items-center justify-between">
-      <h5 class="m-0">Gestión de cursos</h5>
+      <h5 class="m-0 text-xl font-semibold">Gestión de Cursos</h5>
       <p-iconfield>
         <p-inputicon styleClass="pi pi-search"></p-inputicon>
-        <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar..." />
+        <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar cursos..." />
       </p-iconfield>
     </div>
   </ng-template>
 
   <ng-template pTemplate="header" let-columns>
-    <tr >
-      <th style="width: 3rem"><p-tableHeaderCheckbox /></th>
-      <th *ngFor="let col of columns"  >{{ col.header }}</th>
-      <th style="width: 8rem"></th>
+    <tr>
+      <th style="width: 3rem; text-align: center;">
+        <p-tableHeaderCheckbox />
+      </th>
+      <th style="width: 120px; text-align: center;">Portada</th>
+      <th style="width: 250px;">Información del Curso</th>
+      <th style="width: 120px; text-align: center;">Precio</th>
+      <th style="width: 180px;">Público Objetivo</th>
+      <th style="width: 140px; text-align: center;">Fecha Pub.</th>
+      <th style="width: 100px; text-align: center;">Estado</th>
+      <th style="width: 120px; text-align: center;">Acciones</th>
     </tr>
   </ng-template>
 
-  <ng-template pTemplate="body" let-curso let-columns="columns">
-    <tr>
-      <td><p-tableCheckbox [value]="curso"></p-tableCheckbox></td>
-      <td (click)="videos(curso.cveCurso)" *ngFor="let col of columns">
-        <ng-container [ngSwitch]="col.field" >
-          <span *ngSwitchCase="'precio'">{{ curso.precio | currency:'MXN' }}</span>
-          <span *ngSwitchCase="'fecha_publicacion'">{{ curso.fecha_publicacion | date:'shortDate' }}</span>
-          <p-tag *ngSwitchCase="'estado'" [value]="curso.estado" [severity]="getSeverity(curso.estado)"></p-tag>
-          <span *ngSwitchDefault>{{ curso[col.field] }}</span>
-        </ng-container>
+  <ng-template pTemplate="body" let-curso>
+    <tr class="hover:bg-gray-50 transition-colors duration-200">
+      <td style="text-align: center;">
+        <p-tableCheckbox [value]="curso"></p-tableCheckbox>
       </td>
-      <td>
-        <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true" (click)="editCurso(curso)" />
-        <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true" (click)="deleteCurso(curso)" />
-
+      
+      <!-- Columna de Portada corregida -->
+      <td style="text-align: center; padding: 8px;">
+        <div class="portada-container" (click)="videos(curso.cveCurso)" style="cursor: pointer;">
+          <img 
+            [src]="getPortadaUrl(curso)" 
+            [alt]="curso.titulo" 
+            class="portada-image"
+            [ngStyle]="{
+              'width': '80px', 
+              'height': '60px', 
+              'object-fit': 'cover', 
+              'border-radius': '8px', 
+              'border': '2px solid #e5e7eb',
+              'box-shadow': '0 2px 4px rgba(0,0,0,0.1)',
+              'transition': 'all 0.3s ease'
+            }"
+            (error)="onImageError($event)"
+            (mouseover)="onImageHover($event, true)"
+            (mouseout)="onImageHover($event, false)"
+          >
+        </div>
+      </td>
+      
+      <!-- Información del curso -->
+      <td (click)="videos(curso.cveCurso)" style="cursor: pointer;">
+        <div class="curso-info">
+          <div class="font-semibold text-gray-900 mb-1" style="font-size: 14px; line-height: 1.4;">
+            {{ curso.titulo }}
+          </div>
+          <div class="text-gray-600 text-sm" style="max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            {{ curso.descripcion || 'Sin descripción' }}
+          </div>
+          <div class="mt-1">
+            <p-tag 
+              [value]="curso.es_gratis ? 'GRATIS' : 'PAGO'" 
+              [severity]="curso.es_gratis ? 'success' : 'info'"
+              [rounded]="true"
+              [ngStyle]="{'font-size': '10px'}">
+            </p-tag>
+          </div>
+        </div>
+      </td>
+      
+      <!-- Precio -->
+      <td style="text-align: center;" (click)="videos(curso.cveCurso)">
+        <div class="precio-container">
+          <span 
+            *ngIf="!curso.es_gratis" 
+            class="font-bold text-green-600"
+            style="font-size: 16px;">
+            {{ curso.precio | currency:'MXN':'symbol':'1.0-0' }}
+          </span>
+          <span 
+            *ngIf="curso.es_gratis" 
+            class="font-bold text-blue-600"
+            style="font-size: 14px;">
+            GRATIS
+          </span>
+        </div>
+      </td>
+      
+      <!-- Público Objetivo -->
+      <td (click)="videos(curso.cveCurso)" style="cursor: pointer;">
+        <span class="text-gray-700" style="font-size: 13px;">
+          {{ curso.publico_objetivo || 'No especificado' }}
+        </span>
+      </td>
+      
+      <!-- Fecha de publicación -->
+      <td style="text-align: center;" (click)="videos(curso.cveCurso)">
+        <span class="text-gray-600" style="font-size: 13px;">
+          {{ curso.fecha_publicacion | date:'dd/MM/yyyy' }}
+        </span>
+      </td>
+      
+      <!-- Estado -->
+      <td style="text-align: center;" (click)="videos(curso.cveCurso)">
+        <p-tag 
+          [value]="curso.estado" 
+          [severity]="getSeverity(curso.estado)"
+          [rounded]="true">
+        </p-tag>
+      </td>
+      
+      <!-- Acciones -->
+      <td style="text-align: center;">
+        <div class="flex justify-center gap-2">
+          <p-button 
+            icon="pi pi-pencil" 
+            [rounded]="true" 
+            [outlined]="true" 
+            size="small"
+            severity="secondary"
+            pTooltip="Editar curso"
+            tooltipPosition="top"
+            (click)="editCurso(curso)" />
+          <p-button 
+            icon="pi pi-trash" 
+            severity="danger" 
+            [rounded]="true" 
+            [outlined]="true" 
+            size="small"
+            pTooltip="Eliminar curso"
+            tooltipPosition="top"
+            (click)="deleteCurso(curso)" />
+        </div>
       </td>
     </tr>
   </ng-template>
 
   <ng-template pTemplate="emptymessage">
     <tr>
-      <td colspan="100%">No hay cursos registrados.</td>
+      <td colspan="8" style="text-align: center; padding: 2rem;">
+        <div class="flex flex-col items-center gap-3">
+          <i class="pi pi-inbox text-4xl text-gray-400"></i>
+          <span class="text-gray-500 text-lg">No hay cursos registrados</span>
+          <p-button label="Crear primer curso" icon="pi pi-plus" (onClick)="openNew()" />
+        </div>
+      </td>
     </tr>
   </ng-template>
 </p-table>
 
-<p-dialog [(visible)]="cursoDialog" [style]="{ width: '450px' }" header="Detalles del curso" [modal]="true" [closable]="false">
+<!-- Diálogo corregido -->
+<p-dialog 
+  [(visible)]="cursoDialog" 
+  [style]="{ width: '500px' }" 
+  header="Detalles del Curso" 
+  [modal]="true" 
+  [closable]="false"
+  [draggable]="false"
+  [resizable]="false">
+  
   <div class="flex flex-col gap-4">
+    <!-- Preview de portada en el diálogo -->
+    <div *ngIf="portadaPreview" class="text-center mb-4">
+      <label class="block font-bold mb-2">Vista previa de portada</label>
+      <img 
+        [src]="portadaPreview" 
+        alt="Preview" 
+        style="max-width: 200px; max-height: 150px; object-fit: cover; border-radius: 8px; border: 2px solid #e5e7eb;">
+    </div>
+    
     <div>
-      <label for="titulo" class="block font-bold mb-2">Título</label>
-      <input pInputText id="titulo" [(ngModel)]="curso.titulo" required autofocus />
+      <label for="portada" class="block font-bold mb-2">Portada del curso</label>
+      <input 
+        type="file" 
+        id="portada" 
+        accept="image/*" 
+        (change)="onPortadaChange($event)"
+        class="w-full p-2 border border-gray-300 rounded-md">
+      <small class="text-gray-500">Formatos soportados: JPG, PNG, GIF (máx. 5MB)</small>
+    </div>
+    
+    <div>
+      <label for="titulo" class="block font-bold mb-2">Título *</label>
+      <input pInputText id="titulo" [(ngModel)]="curso.titulo" required autofocus class="w-full" />
       <small class="text-red-500" *ngIf="submitted && !curso.titulo">El título es obligatorio.</small>
     </div>
+    
     <div>
       <label for="descripcion" class="block font-bold mb-2">Descripción</label>
-      <textarea id="descripcion" pTextarea [(ngModel)]="curso.descripcion" rows="3"></textarea>
+      <textarea id="descripcion" pTextarea [(ngModel)]="curso.descripcion" rows="3" class="w-full"></textarea>
     </div>
+    
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label for="precio" class="block font-bold mb-2">Precio</label>
+        <p-inputnumber 
+          id="precio" 
+          [(ngModel)]="curso.precio" 
+          mode="currency" 
+          currency="MXN" 
+          locale="es-MX"
+          [disabled]="!!curso.es_gratis">
+        </p-inputnumber>
+      </div>
+      
+      <div>
+        <label for="estado" class="block font-bold mb-2">Estado</label>
+        <p-select 
+          [(ngModel)]="curso.estado" 
+          [options]="statuses" 
+          optionLabel="label" 
+          optionValue="value" 
+          placeholder="Selecciona estado"
+          class="w-full">
+        </p-select>
+      </div>
+    </div>
+    
     <div>
-      <label for="precio" class="block font-bold mb-2">Precio</label>
-      <p-inputnumber id="precio" [(ngModel)]="curso.precio" mode="currency" currency="USD" locale="es-ES"></p-inputnumber>
-    </div>
-        <div>
-      <label for="estado" class="block font-bold mb-2">Estado</label>
-      <p-select [(ngModel)]="curso.estado" [options]="statuses" optionLabel="label" optionValue="value" placeholder="Selecciona un estado"></p-select>
-    </div>
-    <div >
-      <label for="es_gratis" class="block font-bold mb-2">¿Es gratis?</label>
-    </div>
-      <div class="flex flex-wrap gap-2">
-        <div>
+      <label class="block font-bold mb-2">¿Es gratis?</label>
+      <div class="flex gap-4">
+        <div class="flex items-center">
           <p-radiobutton name="es_gratis" [value]="true" [(ngModel)]="curso.es_gratis" inputId="gratis"></p-radiobutton>
-                  <label for="gratis" class="ml-2">Si</label>
+          <label for="gratis" class="ml-2">Sí, es gratis</label>
         </div>
-        <div>
+        <div class="flex items-center">
           <p-radiobutton name="es_gratis" [value]="false" [(ngModel)]="curso.es_gratis" inputId="noGratis"></p-radiobutton>
-                            <label for="noGratis" class="ml-2">No</label>
-
+          <label for="noGratis" class="ml-2">No, es de pago</label>
         </div>
+      </div>
     </div>
+    
     <div>
       <label for="publico_objetivo" class="block font-bold mb-2">Público Objetivo</label>
-      <input pInputText id="publico_objetivo" [(ngModel)]="curso.publico_objetivo" />
+      <input pInputText id="publico_objetivo" [(ngModel)]="curso.publico_objetivo" class="w-full" />
     </div>
-
   </div>
+  
   <ng-template pTemplate="footer">
-    <p-button label="Cancelar" icon="pi pi-times" text (onClick)="hideDialog()" />
-    <p-button label="Guardar" icon="pi pi-check" (onClick)="saveCurso()" />
+    <div class="flex justify-end gap-2">
+      <p-button label="Cancelar" icon="pi pi-times" [outlined]="true" (onClick)="hideDialog()" />
+      <p-button label="Guardar" icon="pi pi-check" (onClick)="saveCurso()" />
+    </div>
   </ng-template>
 </p-dialog>
 

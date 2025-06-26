@@ -11,10 +11,16 @@ import { PreguntasEvaluacionComponent } from './app/components/preguntas-evaluac
 import { PreguntasCursoComponent } from './app/components/preguntas-curso/preguntas-curso.component';
 import { ClaseEnVivoComponent } from './app/components/clase-en-vivo/clase-en-vivo.component';
 import { CuponesComponent } from './app/components/cupones/cupones.component';
+import { VideoLlamadaComponent } from './app/components/video-llamada/video-llamada.component';
+import { appLanding } from './app/landing/landingMain';
 
 export const appRoutes: Routes = [
     {
         path: '',
+        component: appLanding,
+    },
+    {
+        path: 'auth',
         component: AuthComponent,
     },
 
@@ -40,7 +46,9 @@ export const appRoutes: Routes = [
             { path: 'evaluaciones/:idCurso', component: EvaluacionesComponent },
             { path: 'cupones/:idCurso', component: CuponesComponent },
             { path: 'evaluaciones/preguntas/:idEvaluacion', component: PreguntasEvaluacionComponent },
-            { path: 'clase-en-vivo', component: ClaseEnVivoComponent}
+            { path: 'clase-en-vivo/:idCurso', component: ClaseEnVivoComponent},
+            { path: 'clase-vivo/:idClase', component: VideoLlamadaComponent},
+            
             
 
         ]

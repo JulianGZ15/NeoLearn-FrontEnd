@@ -1,6 +1,6 @@
 <p-toolbar class="mb-4">
   <ng-template pTemplate="start">
-    <p-button label="Nuevo" icon="pi pi-plus" severity="secondary" class="mr-2" (onClick)="openNew()" />
+    <p-button label="Nuevo Video" icon="pi pi-plus" severity="secondary" class="mr-2" (onClick)="openNew()" />
     <p-button label="Eliminar" icon="pi pi-trash" severity="secondary" outlined (onClick)="deleteSelectedVideos()" [disabled]="!selectedVideos.length" />
   </ng-template>
   <ng-template pTemplate="end">
@@ -13,83 +13,249 @@
   [value]="videos"
   [columns]="cols"
   [paginator]="true"
-  [rows]="10"
-  [rowsPerPageOptions]="[10, 20, 30]"
-  [globalFilterFields]="['titulo', 'url']"
+  [rows]="6"
+  [rowsPerPageOptions]="[6, 12, 18]"
+  [globalFilterFields]="['titulo', 'url', 'duracion_minutos', 'orden']"
   [rowHover]="true"
   dataKey="cveVideo"
   [(selection)]="selectedVideos"
-  [tableStyle]="{'min-width':'60rem'}"
-  currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} vídeos"
+  [tableStyle]="{'min-width':'90rem'}"
+  currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} videos"
   [showCurrentPageReport]="true"
+  styleClass="p-datatable-gridlines"
 >
   <ng-template pTemplate="caption">
     <div class="flex items-center justify-between">
-      <h5 class="m-0">Gestión de vídeos del curso</h5>
+      <h5 class="m-0 text-xl font-semibold">Gestión de Videos del Curso</h5>
       <p-iconfield>
         <p-inputicon styleClass="pi pi-search"></p-inputicon>
-        <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar..." />
+        <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar videos..." />
       </p-iconfield>
     </div>
   </ng-template>
 
-  <ng-template pTemplate="header" let-columns>
+  <ng-template pTemplate="header">
     <tr>
-      <th style="width: 3rem"><p-tableHeaderCheckbox /></th>
-      <th *ngFor="let col of columns">{{ col.header }}</th>
-      <th style="width: 8rem"></th>
+      <th style="width: 3rem; text-align: center;">
+        <p-tableHeaderCheckbox />
+      </th>
+      <th style="width: 140px; text-align: center;">Portada</th>
+      <th style="width: 300px;">Información del Video</th>
+      <th style="width: 200px;">URL</th>
+      <th style="width: 120px; text-align: center;">Duración</th>
+      <th style="width: 80px; text-align: center;">Orden</th>
+      <th style="width: 120px; text-align: center;">Acciones</th>
     </tr>
   </ng-template>
 
-  <ng-template pTemplate="body" let-video let-columns="columns">
-    <tr>
-      <td><p-tableCheckbox [value]="video"></p-tableCheckbox></td>
-      <td *ngFor="let col of columns">
-        <ng-container [ngSwitch]="col.field">
-          <span *ngSwitchCase="'duracion_minutos'">{{ video.duracion_minutos }} min</span>
-          <span *ngSwitchCase="'url'">
-            <a [href]="video.url" target="_blank">{{ video.url }}</a>
-          </span>
-          <span *ngSwitchDefault>{{ video[col.field] }}</span>
-        </ng-container>
+  <ng-template pTemplate="body" let-video>
+    <tr class="hover:bg-gray-50 transition-colors duration-200">
+      <td style="text-align: center;">
+        <p-tableCheckbox [value]="video"></p-tableCheckbox>
       </td>
+      
+      <!-- Columna de Portada -->
+      <!-- En lugar del overlay absoluto, usa este enfoque -->
+<td style="text-align: center; padding: 8px;">
+  <div class="portada-container" style="cursor: pointer; position: relative;">
+    <img 
+      [src]="getPortadaUrl(video)" 
+      [alt]="video.titulo" 
+      class="video-thumbnail"
+      [ngStyle]="{
+        'width': '100px', 
+        'height': '60px', 
+        'object-fit': 'cover', 
+        'border-radius': '8px', 
+        'border': '2px solid #e5e7eb',
+        'box-shadow': '0 2px 4px rgba(0,0,0,0.1)',
+        'transition': 'all 0.3s ease'
+      }"
+      (error)="onImageError($event)"
+      (mouseover)="onImageHover($event, true)"
+      (mouseout)="onImageHover($event, false)"
+    >
+    <!-- Overlay corregido con pointer-events -->
+    <div 
+      class="play-overlay"
+      [ngStyle]="{
+        'position': 'absolute',
+        'top': '0',
+        'left': '0',
+        'right': '0',
+        'bottom': '0',
+        'display': 'flex',
+        'align-items': 'center',
+        'justify-content': 'center',
+        'background-color': 'rgba(0,0,0,0.3)',
+        'border-radius': '8px',
+        'opacity': '0',
+        'transition': 'opacity 0.3s ease',
+        'pointer-events': 'none'
+      }"
+      [class.opacity-100]="false">
+      <i class="pi pi-play text-white text-2xl" style="pointer-events: none;"></i>
+    </div>
+  </div>
+</td>
+
+      
+      <!-- Información del video -->
+      <td style="cursor: pointer;">
+        <div class="video-info">
+          <div class="font-semibold text-gray-900 mb-1" style="font-size: 14px; line-height: 1.4;">
+            {{ video.titulo }}
+          </div>
+          <div class="text-gray-600 text-sm">
+            <i class="pi pi-video mr-1"></i>
+            Video #{{ video.orden }}
+          </div>
+        </div>
+      </td>
+      
+      <!-- URL -->
       <td>
-        <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true" (click)="editVideo(video)" />
-        <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true" (click)="deleteVideo(video)" />
+        <div class="url-container" style="max-width: 180px;">
+          <a 
+            [href]="video.url" 
+            target="_blank" 
+            class="text-blue-600 hover:text-blue-800 text-sm"
+            style="word-break: break-all; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            {{ video.url }}
+          </a>
+        </div>
+      </td>
+      
+      <!-- Duración -->
+      <td style="text-align: center;">
+        <p-tag 
+          [value]="formatDuration(video.duracion_minutos)" 
+          severity="info"
+          [rounded]="true">
+        </p-tag>
+      </td>
+      
+      <!-- Orden -->
+      <td style="text-align: center;">
+        <span class="font-bold text-gray-700">{{ video.orden }}</span>
+      </td>
+      
+      <!-- Acciones -->
+      <td style="text-align: center;">
+        <div class="flex justify-center gap-2">
+          <p-button 
+            icon="pi pi-pencil" 
+            [rounded]="true" 
+            [outlined]="true" 
+            size="small"
+            severity="secondary"
+            pTooltip="Editar video"
+            tooltipPosition="top"
+            (click)="editVideo(video)" />
+          <p-button 
+            icon="pi pi-trash" 
+            severity="danger" 
+            [rounded]="true" 
+            [outlined]="true" 
+            size="small"
+            pTooltip="Eliminar video"
+            tooltipPosition="top"
+            (click)="deleteVideo(video)" />
+        </div>
       </td>
     </tr>
   </ng-template>
 
   <ng-template pTemplate="emptymessage">
     <tr>
-      <td colspan="100%">No hay vídeos registrados para este curso.</td>
+      <td colspan="7" style="text-align: center; padding: 2rem;">
+        <div class="flex flex-col items-center gap-3">
+          <i class="pi pi-video text-4xl text-gray-400"></i>
+          <span class="text-gray-500 text-lg">No hay videos registrados para este curso</span>
+          <p-button label="Agregar primer video" icon="pi pi-plus" (onClick)="openNew()" />
+        </div>
+      </td>
     </tr>
   </ng-template>
 </p-table>
 
-<p-dialog [(visible)]="videoDialog" [style]="{ width: '450px' }" header="Detalles del vídeo" [modal]="true" [closable]="false">
+<!-- Diálogo de Video -->
+<p-dialog 
+  [(visible)]="videoDialog" 
+  [style]="{ width: '600px' }" 
+  header="Detalles del Video" 
+  [modal]="true" 
+  [closable]="false"
+  [draggable]="false"
+  [resizable]="false">
+  
   <div class="flex flex-col gap-4">
+    <!-- Preview de portada -->
+    <div *ngIf="portadaPreview" class="text-center mb-4">
+      <label class="block font-bold mb-2">Vista previa de portada</label>
+      <div class="relative inline-block">
+        <img 
+          [src]="portadaPreview" 
+          alt="Preview" 
+          style="max-width: 250px; max-height: 150px; object-fit: cover; border-radius: 8px; border: 2px solid #e5e7eb;">
+        <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-lg">
+          <i class="pi pi-play text-white text-3xl"></i>
+        </div>
+      </div>
+    </div>
+    
     <div>
-      <label for="titulo" class="block font-bold mb-2">Título</label>
-      <input pInputText id="titulo" [(ngModel)]="video.titulo" required autofocus />
+      <label for="portada" class="block font-bold mb-2">Portada del video</label>
+      <input 
+        type="file" 
+        id="portada" 
+        accept="image/*" 
+        (change)="onPortadaChange($event)"
+        class="w-full p-2 border border-gray-300 rounded-md">
+      <small class="text-gray-500">Formatos soportados: JPG, PNG, GIF (máx. 5MB)</small>
+    </div>
+    
+    <div>
+      <label for="titulo" class="block font-bold mb-2">Título *</label>
+      <input pInputText id="titulo" [(ngModel)]="video.titulo" required autofocus class="w-full" />
       <small class="text-red-500" *ngIf="submitted && !video.titulo">El título es obligatorio.</small>
     </div>
+    
     <div>
-      <label for="url" class="block font-bold mb-2">URL</label>
-      <input pInputText id="url" [(ngModel)]="video.url" required />
+      <label for="url" class="block font-bold mb-2">URL del video *</label>
+      <input pInputText id="url" [(ngModel)]="video.url" required class="w-full" placeholder="https://..." />
+      <small class="text-red-500" *ngIf="submitted && !video.url">La URL es obligatoria.</small>
     </div>
-    <div>
-      <label for="duracion_minutos" class="block font-bold mb-2">Duración (minutos)</label>
-      <p-inputnumber id="duracion_minutos" [(ngModel)]="video.duracion_minutos" [min]="1"></p-inputnumber>
-    </div>
-    <div>
-      <label for="orden" class="block font-bold mb-2">Orden</label>
-      <p-inputnumber id="orden" [(ngModel)]="video.orden" [min]="1"></p-inputnumber>
+    
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label for="duracion" class="block font-bold mb-2">Duración (minutos)</label>
+        <p-inputnumber 
+          id="duracion" 
+          [(ngModel)]="video.duracion_minutos" 
+          [min]="1"
+          [max]="999"
+          suffix=" min">
+        </p-inputnumber>
+      </div>
+      
+      <div>
+        <label for="orden" class="block font-bold mb-2">Orden</label>
+        <p-inputnumber 
+          id="orden" 
+          [(ngModel)]="video.orden" 
+          [min]="1"
+          [max]="999">
+        </p-inputnumber>
+      </div>
     </div>
   </div>
+  
   <ng-template pTemplate="footer">
-    <p-button label="Cancelar" icon="pi pi-times" text (onClick)="hideDialog()" />
-    <p-button label="Guardar" icon="pi pi-check" (onClick)="saveVideo()" />
+    <div class="flex justify-end gap-2">
+      <p-button label="Cancelar" icon="pi pi-times" [outlined]="true" (onClick)="hideDialog()" />
+      <p-button label="Guardar" icon="pi pi-check" (onClick)="saveVideo()" />
+    </div>
   </ng-template>
 </p-dialog>
 

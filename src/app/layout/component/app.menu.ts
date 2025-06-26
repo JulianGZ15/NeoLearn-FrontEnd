@@ -95,7 +95,7 @@ export class AppMenu implements OnInit {
         {
           label: 'Clases en Vivo',
           items: [
-            { label: 'Clases en Vivo', icon: 'pi pi-fw pi-video', routerLink: [`/cursos/clase-en-vivo`] },
+            { label: 'Clases en Vivo', icon: 'pi pi-fw pi-video', routerLink: [`/cursos/clase-en-vivo/${this.idCurso}`] },
           ]
         },
         {

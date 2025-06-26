@@ -1,9 +1,4 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ClaseEnVivoDTO } from '../../../dtos/claseEnVivo.dto';
-import { ActivatedRoute } from '@angular/router';
-import { WebRTCService } from '../../Services/web-rtc.service';
-import { ClaseEnVivoService } from '../../Services/clase-en-vivo.service';
-import { MessageService } from 'primeng/api';
 import { Table, TableModule } from 'primeng/table';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -22,157 +17,423 @@ import { TagModule } from 'primeng/tag';
 import { InputIconModule } from 'primeng/inputicon';
 import { IconFieldModule } from 'primeng/iconfield';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { EvaluacionDTO } from '../../../dtos/evaluacion.dto';
-import { EvaluacionService } from '../../Services/evaluacion.service';
-import { TokenInvitacionEmpresaDTO } from '../../../dtos/tokenInvitacionEmpresa.dto';
-import { InvitacionService } from '../../Services/invitacion.service';
+import { CardModule } from 'primeng/card';
+import { ChipModule } from 'primeng/chip';
+import { AvatarModule } from 'primeng/avatar';
+import { MessagesModule } from 'primeng/messages';
+import { DropdownModule } from 'primeng/dropdown';
+import { DividerModule } from 'primeng/divider';
+import { CalendarModule } from 'primeng/calendar';
+
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { SignalingService } from '../../Services/signaling.service';
+import { forkJoin, Subject, takeUntil } from 'rxjs';
+import { ClaseEnVivoDTO, ProgramarClaseRequest } from '../../../dtos/claseEnVivo.dto';
+import { SalaEnVivoDTO } from '../../../dtos/salaEnVivo.dto';
+import { EstadoClase } from '../../../dtos/estadoClase.enum';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ClaseEnVivoService } from '../../Services/clase-en-vivo.service';
+import { SalaEnVivoService } from '../../Services/sala-en-vivo.service';
+import { ConfirmationService, MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-clase-en-vivo',
   imports: [
-        CommonModule,
-        TableModule,
-        FormsModule,
-        ButtonModule,
-        RippleModule,
-        ToastModule,
-        ToolbarModule,
-        RatingModule,
-        InputTextModule,
-        TextareaModule,
-        SelectModule,
-        RadioButtonModule,
-        InputNumberModule,
-        DialogModule,
-        TagModule,
-        InputIconModule,
-        IconFieldModule,
-        ConfirmDialogModule],
+    CommonModule,
+    TableModule,
+    FormsModule,
+    ButtonModule,
+    RippleModule,
+    ToastModule,
+    ToolbarModule,
+    RatingModule,
+    InputTextModule,
+    TextareaModule,
+    SelectModule,
+    RadioButtonModule,
+    InputNumberModule,
+    DialogModule,
+    TagModule,
+    InputIconModule,
+    IconFieldModule,
+    ConfirmDialogModule,
+    CardModule,
+    ChipModule,
+    AvatarModule,
+    MessagesModule,
+    ProgressSpinnerModule,
+    DropdownModule,
+    DividerModule,
+    CalendarModule],
   templateUrl: './clase-en-vivo.component.html',
   styleUrl: './clase-en-vivo.component.scss'
 })
+// components/clases-en-vivo/clases-en-vivo.component.ts
 export class ClaseEnVivoComponent implements OnInit, OnDestroy {
-@ViewChild('localVideo') localVideo!: ElementRef<HTMLVideoElement>;
-  @ViewChild('remoteVideo') remoteVideo!: ElementRef<HTMLVideoElement>;
+  private destroy$ = new Subject<void>();
 
-  claseId!: number;
-  clase: ClaseEnVivoDTO = {};
-  isVideoEnabled = true;
-  isAudioEnabled = true;
-  connectionState = 'disconnected';
-  isInstructor = false; // Determinar según el rol del usuario
+  // Datos
+  cursoId!: number;
+  clases: ClaseEnVivoDTO[] = [];
+  salas: SalaEnVivoDTO[] = [];
+  clasesEnVivo: ClaseEnVivoDTO[] = [];
+  
+  // Estados UI
+  loading = false;
+  mostrarDialogoProgramar = false;
+  mostrarDialogoDetalle = false;
+  claseSeleccionada?: ClaseEnVivoDTO;
+  
+  // Formulario
+  nuevaClase: ProgramarClaseRequest = {
+    titulo: '',
+    descripcion: '',
+    fechaProgramada: '',
+    duracionEstimadaMinutos: 60
+  };
+  salaSeleccionada?: SalaEnVivoDTO;
+  
+  // Filtros
+  filtroEstado: EstadoClase | 'TODAS' = 'TODAS';
+  filtroFecha: Date | null = null;
+  
+  // Enums para template
+  EstadoClase = EstadoClase;
+  
+  // Opciones
+  opcionesEstado = [
+    { label: 'Todas', value: 'TODAS' },
+    { label: 'Programadas', value: EstadoClase.PROGRAMADA },
+    { label: 'En Vivo', value: EstadoClase.EN_VIVO },
+    { label: 'Finalizadas', value: EstadoClase.FINALIZADA },
+    { label: 'Canceladas', value: EstadoClase.CANCELADA }
+  ];
 
   constructor(
     private route: ActivatedRoute,
-    private webrtcService: WebRTCService,
-    private claseService: ClaseEnVivoService,
-    private messageService: MessageService
+    private router: Router,
+    public claseService: ClaseEnVivoService,
+    private salaService: SalaEnVivoService,
+    private messageService: MessageService,
+    private confirmationService: ConfirmationService,
+
   ) {}
 
-  ngOnInit() {
-    this.route.paramMap.subscribe(params => {
-      this.claseId = Number(params.get('claseId'));
-      this.loadClase();
+  ngOnInit(): void {
+    this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
+      this.cursoId = +params['idCurso'];
+      this.cargarDatos();
     });
 
-    this.setupWebRTCSubscriptions();
+
+    // Actualizar clases en vivo cada 30 segundos
+    setInterval(() => this.cargarClasesEnVivo(), 30000);
   }
 
-  ngOnDestroy() {
-    this.webrtcService.disconnect();
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
-  private loadClase() {
-    // Aquí cargarías los detalles de la clase
-    // Por simplicidad, asumo que tienes un método para obtener una clase por ID
-  }
-
-  private setupWebRTCSubscriptions() {
-    this.webrtcService.localStream$.subscribe(stream => {
-      if (stream && this.localVideo) {
-        this.localVideo.nativeElement.srcObject = stream;
+  cargarDatos(): void {
+    this.loading = true;
+    
+    forkJoin({
+      clases: this.claseService.listarPorCurso(this.cursoId),
+      salas: this.salaService.obtenerPorCurso(this.cursoId),
+      clasesEnVivo: this.claseService.listarClasesEnVivo()
+    }).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (data) => {
+        this.clases = data.clases;
+        this.salas = data.salas;
+        this.clasesEnVivo = data.clasesEnVivo.filter(c => c.cursoId === this.cursoId);
+        this.loading = false;
+      },
+      error: (error) => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Error al cargar los datos'
+        });
+        this.loading = false;
       }
     });
-
-    this.webrtcService.remoteStream$.subscribe(stream => {
-      if (stream && this.remoteVideo) {
-        this.remoteVideo.nativeElement.srcObject = stream;
-      }
-    });
-
-    this.webrtcService.connectionState$.subscribe(state => {
-      this.connectionState = state;
-    });
   }
 
-  async iniciarClase() {
-    try {
-      await this.webrtcService.initializeMedia();
-      
-      this.claseService.iniciarClase(this.claseId).subscribe({
-        next: (roomId) => {
-          this.webrtcService.connectToRoom(roomId);
+  cargarClasesEnVivo(): void {
+    this.claseService.listarClasesEnVivo()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(clases => {
+        this.clasesEnVivo = clases.filter(c => c.cursoId === this.cursoId);
+      });
+  }
+
+  // Gestión de salas
+  crearNuevaSala(): void {
+    this.salaService.crearSala(this.cursoId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (sala) => {
+          this.salas.push(sala);
           this.messageService.add({
             severity: 'success',
-            summary: 'Clase iniciada',
-            detail: 'La videoconferencia ha comenzado'
+            summary: 'Éxito',
+            detail: 'Sala creada correctamente'
           });
         },
         error: () => {
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
-            detail: 'No se pudo iniciar la clase'
+            detail: 'Error al crear la sala'
           });
         }
       });
-    } catch (error) {
+  }
+
+  // Programación de clases
+  abrirDialogoProgramar(): void {
+    if (this.salas.length === 0) {
       this.messageService.add({
-        severity: 'error',
-        summary: 'Error de acceso',
-        detail: 'No se pudo acceder a la cámara o micrófono'
+        severity: 'warn',
+        summary: 'Advertencia',
+        detail: 'Primero debes crear una sala para programar clases'
       });
+      return;
     }
+    
+    this.resetearFormulario();
+    this.mostrarDialogoProgramar = true;
   }
 
-  async unirseAClase() {
-    try {
-      await this.webrtcService.initializeMedia();
-      const roomId = `clase-${this.claseId}`;
-      this.webrtcService.connectToRoom(roomId);
-    } catch (error) {
+  programarClase(): void {
+    if (!this.validarFormulario()) return;
+    
+    this.loading = true;
+    
+    this.claseService.programarClase(this.nuevaClase, this.salaSeleccionada!.id!)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (clase) => {
+          this.clases.push(clase);
+          this.mostrarDialogoProgramar = false;
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Éxito',
+            detail: 'Clase programada correctamente'
+          });
+          this.loading = false;
+        },
+        error: (error) => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: error.message || 'Error al programar la clase'
+          });
+          this.loading = false;
+        }
+      });
+  }
+
+  // Gestión de clases
+  iniciarTransmision(clase: ClaseEnVivoDTO): void {
+    if (!this.claseService.puedeIniciarClase(clase)) {
       this.messageService.add({
-        severity: 'error',
-        summary: 'Error de acceso',
-        detail: 'No se pudo acceder a la cámara o micrófono'
+        severity: 'warn',
+        summary: 'Advertencia',
+        detail: 'La clase solo puede iniciarse 15 minutos antes o después de la hora programada'
       });
+      return;
     }
-  }
 
-  toggleVideo() {
-    this.webrtcService.toggleVideo();
-    this.isVideoEnabled = !this.isVideoEnabled;
-  }
-
-  toggleAudio() {
-    this.webrtcService.toggleAudio();
-    this.isAudioEnabled = !this.isAudioEnabled;
-  }
-
-  finalizarClase() {
-    this.claseService.finalizarClase(this.claseId).subscribe({
-      next: () => {
-        this.webrtcService.disconnect();
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Clase finalizada',
-          detail: 'La videoconferencia ha terminado'
-        });
+    this.confirmationService.confirm({
+      message: '¿Estás seguro de que deseas iniciar la transmisión?',
+      header: 'Confirmar Inicio',
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        this.claseService.iniciarTransmision(clase.cveClaseEnVivo!)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: (claseActualizada) => {
+              this.actualizarClaseEnLista(claseActualizada);
+              this.messageService.add({
+                severity: 'success',
+                summary: 'Éxito',
+                detail: 'Transmisión iniciada'
+              });
+              
+              // Navegar a la sala de transmisión
+              this.router.navigate(['/clase-transmision', claseActualizada.cveClaseEnVivo]);
+            },
+            error: () => {
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Error al iniciar la transmisión'
+              });
+            }
+          });
       }
     });
   }
 
-  salirDeClase() {
-    this.webrtcService.disconnect();
+  finalizarTransmision(clase: ClaseEnVivoDTO): void {
+    this.confirmationService.confirm({
+      message: '¿Estás seguro de que deseas finalizar la transmisión?',
+      header: 'Confirmar Finalización',
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        this.claseService.finalizarTransmision(clase.cveClaseEnVivo!)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: (claseActualizada) => {
+              this.actualizarClaseEnLista(claseActualizada);
+              this.messageService.add({
+                severity: 'success',
+                summary: 'Éxito',
+                detail: 'Transmisión finalizada'
+              });
+            },
+            error: () => {
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Error al finalizar la transmisión'
+              });
+            }
+          });
+      }
+    });
+  }
+
+  reprogramarClase(clase: ClaseEnVivoDTO): void {
+    // Implementar diálogo de reprogramación
+    this.claseSeleccionada = clase;
+    // Abrir diálogo específico para reprogramar
+  }
+
+  cancelarClase(clase: ClaseEnVivoDTO): void {
+    this.confirmationService.confirm({
+      message: '¿Estás seguro de que deseas cancelar esta clase?',
+      header: 'Confirmar Cancelación',
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        this.claseService.cancelarClase(clase.cveClaseEnVivo!)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: () => {
+              clase.estado = EstadoClase.CANCELADA;
+              this.messageService.add({
+                severity: 'success',
+                summary: 'Éxito',
+                detail: 'Clase cancelada'
+              });
+            },
+            error: () => {
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Error al cancelar la clase'
+              });
+            }
+          });
+      }
+    });
+  }
+
+  // Navegación
+  unirseAClase(clase: ClaseEnVivoDTO): void {
+    this.router.navigate(['cursos/clase-vivo', clase.cveClaseEnVivo]);
+  }
+
+  verDetalle(clase: ClaseEnVivoDTO): void {
+    this.claseSeleccionada = clase;
+    this.mostrarDialogoDetalle = true;
+  }
+
+  // Utilidades
+  get clasesFiltradas(): ClaseEnVivoDTO[] {
+    let clasesFiltradas = [...this.clases];
+    
+    if (this.filtroEstado !== 'TODAS') {
+      clasesFiltradas = clasesFiltradas.filter(c => c.estado === this.filtroEstado);
+    }
+    
+    if (this.filtroFecha) {
+      const fechaFiltro = this.filtroFecha.toISOString().split('T')[0];
+      clasesFiltradas = clasesFiltradas.filter(c => 
+        c.fechaProgramada.startsWith(fechaFiltro)
+      );
+    }
+    
+    return clasesFiltradas;
+  }
+
+  getSeverityByEstado(estado: EstadoClase): string {
+    const severities = {
+      [EstadoClase.PROGRAMADA]: 'info',
+      [EstadoClase.EN_VIVO]: 'success',
+      [EstadoClase.FINALIZADA]: 'secondary',
+      [EstadoClase.CANCELADA]: 'danger'
+    };
+    return severities[estado] || 'secondary';
+  }
+
+  getIconByEstado(estado: EstadoClase): string {
+    const icons = {
+      [EstadoClase.PROGRAMADA]: 'pi pi-clock',
+      [EstadoClase.EN_VIVO]: 'pi pi-play-circle',
+      [EstadoClase.FINALIZADA]: 'pi pi-check-circle',
+      [EstadoClase.CANCELADA]: 'pi pi-times-circle'
+    };
+    return icons[estado] || 'pi pi-circle';
+  }
+
+  private validarFormulario(): boolean {
+    if (!this.nuevaClase.titulo.trim()) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Validación',
+        detail: 'El título es requerido'
+      });
+      return false;
+    }
+    
+    if (!this.nuevaClase.fechaProgramada) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Validación',
+        detail: 'La fecha programada es requerida'
+      });
+      return false;
+    }
+    
+    if (!this.salaSeleccionada) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Validación',
+        detail: 'Debes seleccionar una sala'
+      });
+      return false;
+    }
+    
+    return true;
+  }
+
+  private resetearFormulario(): void {
+    this.nuevaClase = {
+      titulo: '',
+      descripcion: '',
+      fechaProgramada: '',
+      duracionEstimadaMinutos: 60
+    };
+    this.salaSeleccionada = undefined;
+  }
+
+  private actualizarClaseEnLista(claseActualizada: ClaseEnVivoDTO): void {
+    const index = this.clases.findIndex(c => c.cveClaseEnVivo === claseActualizada.cveClaseEnVivo);
+    if (index !== -1) {
+      this.clases[index] = claseActualizada;
+    }
   }
 }

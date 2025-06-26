@@ -62,6 +62,7 @@ export class CursosComponent implements OnInit {
   exportColumns: any[] = [];
   portadaFile: File | null = null;
   portadaPreview: string | null = null;
+  portadaUrls: { [key: number]: string } = {};
 
   @ViewChild('dt') dt!: Table;
 
@@ -96,7 +97,11 @@ export class CursosComponent implements OnInit {
 
   loadCursos() {
     this.cursoService.listarCursos().subscribe({
-      next: (data) => this.cursos = data,
+      next: (data) => {
+        this.cursos = data;
+        // Cargar las portadas después de obtener los cursos
+        this.loadPortadas();
+      },
       error: () => this.messageService.add({
         severity: 'error',
         summary: 'Error',
@@ -104,6 +109,42 @@ export class CursosComponent implements OnInit {
         life: 3000
       })
     });
+  }
+
+  loadPortadas() {
+    this.cursos.forEach(curso => {
+      if (curso.portada && curso.cveCurso) {
+        this.loadPortadaUrl(curso.cveCurso, curso.portada);
+      }
+    });
+  }
+
+  loadPortadaUrl(cursoId: number, nombreArchivo: string) {
+    if (this.portadaUrls[cursoId]) {
+      return; // Ya está cargada
+    }
+
+    this.cursoService.obtenerPortada(nombreArchivo).subscribe({
+      next: (blob: Blob) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          this.portadaUrls[cursoId] = reader.result as string;
+        };
+        reader.readAsDataURL(blob);
+      },
+      error: (error) => {
+        console.error('Error al cargar portada:', error);
+        // Opcional: establecer una imagen por defecto
+        this.portadaUrls[cursoId] = 'assets/images/no-image.png';
+      }
+    });
+  }
+
+  getPortadaUrl(curso: CursoDTO): string {
+    if (curso.cveCurso && this.portadaUrls[curso.cveCurso]) {
+      return this.portadaUrls[curso.cveCurso];
+    }
+    return 'assets/images/no-image.png'; // Imagen por defecto
   }
 
   nuevoCurso(): CursoDTO {
@@ -130,7 +171,29 @@ export class CursosComponent implements OnInit {
   editCurso(curso: CursoDTO) {
     this.curso = { ...curso };
     this.portadaFile = null;
-    this.portadaPreview = null;
+    
+    // Si el curso tiene portada, cargarla como preview
+    if (curso.portada && curso.cveCurso && this.portadaUrls[curso.cveCurso]) {
+      this.portadaPreview = this.portadaUrls[curso.cveCurso];
+    } else if (curso.portada && curso.cveCurso) {
+      // Cargar la portada si no está en caché
+      this.cursoService.obtenerPortada(curso.portada).subscribe({
+        next: (blob: Blob) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            this.portadaPreview = reader.result as string;
+            this.portadaUrls[curso.cveCurso!] = this.portadaPreview!;
+          };
+          reader.readAsDataURL(blob);
+        },
+        error: () => {
+          this.portadaPreview = null;
+        }
+      });
+    } else {
+      this.portadaPreview = null;
+    }
+    
     this.cursoDialog = true;
   }
 
@@ -166,7 +229,7 @@ export class CursosComponent implements OnInit {
     });
   }
 
-  deleteCurso(curso: CursoDTO) {
+ deleteCurso(curso: CursoDTO) {
     this.confirmationService.confirm({
       message: `¿Estás seguro de que quieres eliminar el curso "${curso.titulo}"?`,
       header: 'Confirmar',
@@ -174,6 +237,10 @@ export class CursosComponent implements OnInit {
       accept: () => {
         this.cursoService.eliminarCurso(curso.cveCurso!).subscribe({
           next: () => {
+            // Limpiar caché de la portada
+            if (curso.cveCurso) {
+              delete this.portadaUrls[curso.cveCurso];
+            }
             this.loadCursos();
             this.messageService.add({
               severity: 'success',
@@ -220,6 +287,10 @@ export class CursosComponent implements OnInit {
       if (this.portadaFile && savedCurso.cveCurso) {
         this.cursoService.subirPortada(savedCurso.cveCurso, this.portadaFile).subscribe({
           next: (updatedCurso) => {
+            // Limpiar caché de la portada para forzar recarga
+            if (savedCurso.cveCurso) {
+              delete this.portadaUrls[savedCurso.cveCurso];
+            }
             this.loadCursos();
             this.messageService.add({
               severity: 'success',
@@ -282,6 +353,7 @@ export class CursosComponent implements OnInit {
     }
   }
 
+  
 
   exportCSV() {
     this.dt.exportCSV();
@@ -307,4 +379,27 @@ export class CursosComponent implements OnInit {
   videos(idCurso: number) {
      this.router.navigate(['/cursos/videos/' + idCurso]);
   }
+
+  // Método para manejar errores de imagen
+onImageError(event: Event) {
+  const target = event.target as HTMLImageElement;
+  if (target) {
+    target.src = 'assets/images/no-image.png';
+  }
+}
+
+// Método para manejar hover de imagen
+onImageHover(event: Event, isHover: boolean) {
+  const target = event.target as HTMLImageElement;
+  if (target) {
+    if (isHover) {
+      target.style.transform = 'scale(1.05)';
+      target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+    } else {
+      target.style.transform = 'scale(1)';
+      target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+    }
+  }
+}
+
 }

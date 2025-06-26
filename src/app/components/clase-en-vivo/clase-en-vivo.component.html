@@ -1,69 +1,438 @@
-<div class="videoconferencia-container">
-  <div class="video-header">
-    <h2>{{ clase.titulo }}</h2>
-    <p-tag [value]="connectionState" [severity]="connectionState === 'connected' ? 'success' : 'warning'"></p-tag>
-  </div>
+<!-- clases-en-vivo.component.html -->
+<div class="clases-en-vivo-container">
+  <!-- Header -->
+  <p-card styleClass="mb-4">
+    <ng-template pTemplate="header">
+      <div class="flex justify-content-between align-items-center p-3">
+        <div>
+          <h2 class="m-0">
+            <i class="pi pi-video mr-2"></i>
+            Clases en Vivo
+          </h2>
+          <p class="text-color-secondary mt-1 mb-0">Gestiona y programa tus clases virtuales</p>
+        </div>
+        
+        <div class="flex gap-2">
+          <p-button 
+            label="Nueva Sala"
+            icon="pi pi-plus"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="crearNuevaSala()"
+            pTooltip="Crear nueva sala de transmisión">
+          </p-button>
+          
+          <p-button 
+            label="Programar Clase"
+            icon="pi pi-calendar-plus"
+            (onClick)="abrirDialogoProgramar()"
+            pTooltip="Programar nueva clase">
+          </p-button>
+        </div>
+      </div>
+    </ng-template>
 
-  <div class="video-grid">
-    <!-- Video local -->
-    <div class="video-container local-video">
-      <video #localVideo autoplay muted playsinline></video>
-      <div class="video-label">Tú</div>
+    <!-- Filtros -->
+    <div class="grid mb-3">
+      <div class="col-12 md:col-4">
+        <label class="block text-sm font-medium mb-2">Estado</label>
+        <p-dropdown 
+          [(ngModel)]="filtroEstado"
+          [options]="opcionesEstado"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Filtrar por estado"
+          class="w-full">
+        </p-dropdown>
+      </div>
+      
+      <div class="col-12 md:col-4">
+        <label class="block text-sm font-medium mb-2">Fecha</label>
+        <p-calendar 
+          [(ngModel)]="filtroFecha"
+          placeholder="Filtrar por fecha"
+          [showIcon]="true"
+          class="w-full">
+        </p-calendar>
+      </div>
+      
+      <div class="col-12 md:col-4 flex align-items-end">
+        <p-button 
+          label="Limpiar Filtros"
+          icon="pi pi-filter-slash"
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="filtroEstado = 'TODAS'; filtroFecha = null"
+          class="w-full">
+        </p-button>
+      </div>
+    </div>
+  </p-card>
+
+  <!-- Clases En Vivo Ahora -->
+  <p-card *ngIf="clasesEnVivo.length > 0" header="🔴 En Vivo Ahora" styleClass="mb-4 live-classes-card">
+    <div class="grid">
+      <div 
+        *ngFor="let clase of clasesEnVivo" 
+        class="col-12 md:col-6 lg:col-4">
+        <div class="live-class-item p-3 border-round surface-border border-1">
+          <div class="flex justify-content-between align-items-start mb-2">
+            <h4 class="m-0 text-primary">{{ clase.titulo }}</h4>
+            <p-chip 
+              label="EN VIVO" 
+              icon="pi pi-circle-fill"
+              styleClass="p-chip-success live-indicator">
+            </p-chip>
+          </div>
+          
+          <p class="text-color-secondary mb-3">{{ clase.instructorNombre }}</p>
+          
+          <div class="flex gap-2">
+            <p-button 
+              label="Unirse"
+              icon="pi pi-sign-in"
+              size="small"
+              (onClick)="unirseAClase(clase)">
+            </p-button>
+            
+            <p-button 
+              icon="pi pi-info-circle"
+              severity="secondary"
+              [outlined]="true"
+              size="small"
+              (onClick)="verDetalle(clase)"
+              pTooltip="Ver detalles">
+            </p-button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </p-card>
+
+  <!-- Lista de Clases -->
+  <p-card header="Todas las Clases">
+    <p-table 
+      [value]="clasesFiltradas" 
+      [loading]="loading"
+      [paginator]="true"
+      [rows]="10"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} clases"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      styleClass="p-datatable-striped">
+      
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Clase</th>
+          <th>Fecha Programada</th>
+          <th>Instructor</th>
+          <th>Estado</th>
+          <th>Sala</th>
+          <th>Duración</th>
+          <th>Acciones</th>
+        </tr>
+      </ng-template>
+      
+      <ng-template pTemplate="body" let-clase>
+        <tr>
+          <td>
+            <div>
+              <div class="font-medium">{{ clase.titulo }}</div>
+              <div class="text-sm text-color-secondary" *ngIf="clase.descripcion">
+                {{ clase.descripcion | slice:0:50 }}{{ clase.descripcion && clase.descripcion.length > 50 ? '...' : '' }}
+              </div>
+            </div>
+          </td>
+          
+          <td>
+            <div>
+              <div>{{ clase.fechaProgramada | date:'dd/MM/yyyy' }}</div>
+              <div class="text-sm text-color-secondary">{{ clase.fechaProgramada | date:'HH:mm' }}</div>
+            </div>
+          </td>
+          
+          <td>{{ clase.instructorNombre }}</td>
+          
+          <td>
+            <p-chip 
+              [label]="clase.estado" 
+              [icon]="getIconByEstado(clase.estado!)"
+              [styleClass]="'p-chip-' + getSeverityByEstado(clase.estado!)">
+            </p-chip>
+          </td>
+          
+          <td>
+            <span class="font-mono text-sm">{{ clase.codigoSala }}</span>
+          </td>
+          
+          <td>{{ claseService.obtenerDuracionFormateada(clase) }}</td>
+          
+          <td>
+            <div class="flex gap-1">
+              <!-- Botón Iniciar -->
+              <p-button 
+                *ngIf="clase.estado === EstadoClase.PROGRAMADA && claseService.puedeIniciarClase(clase)"
+                icon="pi pi-play"
+                severity="success"
+                size="small"
+                [rounded]="true"
+                (onClick)="iniciarTransmision(clase)"
+                pTooltip="Iniciar transmisión">
+              </p-button>
+              
+              <!-- Botón Unirse -->
+              <p-button 
+                *ngIf="clase.estado === EstadoClase.EN_VIVO"
+                icon="pi pi-sign-in"
+                severity="primary"
+                size="small"
+                [rounded]="true"
+                (onClick)="unirseAClase(clase)"
+                pTooltip="Unirse a la clase">
+              </p-button>
+              
+              <!-- Botón Finalizar -->
+              <p-button 
+                *ngIf="clase.estado === EstadoClase.EN_VIVO"
+                icon="pi pi-stop"
+                severity="danger"
+                size="small"
+                [rounded]="true"
+                (onClick)="finalizarTransmision(clase)"
+                pTooltip="Finalizar transmisión">
+              </p-button>
+              
+              <!-- Botón Reprogramar -->
+              <p-button 
+                *ngIf="clase.estado === EstadoClase.PROGRAMADA"
+                icon="pi pi-calendar"
+                severity="warn"
+                [outlined]="true"
+                size="small"
+                [rounded]="true"
+                (onClick)="reprogramarClase(clase)"
+                pTooltip="Reprogramar">
+              </p-button>
+              
+              <!-- Botón Cancelar -->
+              <p-button 
+                *ngIf="clase.estado === EstadoClase.PROGRAMADA"
+                icon="pi pi-times"
+                severity="danger"
+                [outlined]="true"
+                size="small"
+                [rounded]="true"
+                (onClick)="cancelarClase(clase)"
+                pTooltip="Cancelar clase">
+              </p-button>
+              
+              <!-- Botón Ver Detalles -->
+              <p-button 
+                icon="pi pi-info-circle"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                [rounded]="true"
+                (onClick)="verDetalle(clase)"
+                pTooltip="Ver detalles">
+              </p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="7" class="text-center p-4">
+            <div class="text-color-secondary">
+              <i class="pi pi-video text-4xl mb-3 block"></i>
+              <p>No hay clases programadas</p>
+              <p-button 
+                label="Programar Primera Clase"
+                icon="pi pi-plus"
+                (onClick)="abrirDialogoProgramar()">
+              </p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
+
+  <!-- Dialog Programar Clase -->
+  <p-dialog 
+    [(visible)]="mostrarDialogoProgramar"
+    header="Programar Nueva Clase"
+    [modal]="true"
+    [style]="{ width: '600px' }"
+    [draggable]="false"
+    [resizable]="false">
+    
+    <div class="grid">
+      <div class="col-12">
+        <label class="block text-sm font-medium mb-2">Título *</label>
+        <input 
+          type="text" 
+          pInputText 
+          [(ngModel)]="nuevaClase.titulo"
+          placeholder="Título de la clase"
+          class="w-full">
+      </div>
+      
+      <div class="col-12">
+        <label class="block text-sm font-medium mb-2">Descripción</label>
+        <textarea 
+          pInputTextarea 
+          [(ngModel)]="nuevaClase.descripcion"
+          placeholder="Descripción opcional"
+          rows="3"
+          class="w-full">
+        </textarea>
+      </div>
+      
+      <div class="col-12 md:col-6">
+        <label class="block text-sm font-medium mb-2">Fecha y Hora *</label>
+        <p-calendar 
+          [(ngModel)]="nuevaClase.fechaProgramada"
+          [showTime]="true"
+          [showIcon]="true"
+          placeholder="Seleccionar fecha y hora"
+          class="w-full">
+        </p-calendar>
+      </div>
+      
+      <div class="col-12">
+        <label class="block text-sm font-medium mb-2">Sala *</label>
+        <p-dropdown 
+          [(ngModel)]="salaSeleccionada"
+          [options]="salas"
+          optionLabel="codigoSala"
+          placeholder="Seleccionar sala"
+          class="w-full">
+          <ng-template pTemplate="selectedItem" let-sala>
+            <div *ngIf="sala">
+              <span class="font-mono">{{ sala.codigoSala }}</span>
+              <span class="ml-2 text-color-secondary">({{ sala.cursoNombre }})</span>
+            </div>
+          </ng-template>
+          <ng-template pTemplate="item" let-sala>
+            <div>
+              <span class="font-mono">{{ sala.codigoSala }}</span>
+              <span class="ml-2 text-color-secondary">({{ sala.cursoNombre }})</span>
+              <p-chip 
+                *ngIf="sala.activa" 
+                label="Activa" 
+                severity="success" 
+                size="small"
+                styleClass="ml-2">
+              </p-chip>
+            </div>
+          </ng-template>
+        </p-dropdown>
+      </div>
+
+      <div class="col-12 md:col-6">
+        <label class="block text-sm font-medium mb-2">Duración (minutos)</label>
+        <p-inputNumber 
+          [(ngModel)]="nuevaClase.duracionEstimadaMinutos"
+          [min]="15"
+          [max]="480"
+          suffix=" min"
+          class="w-full">
+        </p-inputNumber>
+      </div>
     </div>
 
-    <!-- Video remoto -->
-    <div class="video-container remote-video">
-      <video #remoteVideo autoplay playsinline></video>
-      <div class="video-label">Instructor</div>
+    <ng-template pTemplate="footer">
+      <p-button 
+        label="Cancelar"
+        icon="pi pi-times"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="mostrarDialogoProgramar = false">
+      </p-button>
+      <p-button 
+        label="Programar"
+        icon="pi pi-check"
+        [loading]="loading"
+        (onClick)="programarClase()">
+      </p-button>
+    </ng-template>
+  </p-dialog>
+
+  <!-- Dialog Detalle Clase -->
+  <p-dialog 
+    [(visible)]="mostrarDialogoDetalle"
+    header="Detalles de la Clase"
+    [modal]="true"
+    [style]="{ width: '500px' }"
+    [draggable]="false"
+    [resizable]="false">
+    
+    <div *ngIf="claseSeleccionada" class="grid">
+      <div class="col-12">
+        <h3 class="mt-0">{{ claseSeleccionada.titulo }}</h3>
+        <p *ngIf="claseSeleccionada.descripcion">{{ claseSeleccionada.descripcion }}</p>
+      </div>
+      
+      <div class="col-6">
+        <label class="block text-sm font-medium text-color-secondary">Instructor</label>
+        <p class="mt-1">{{ claseSeleccionada.instructorNombre }}</p>
+      </div>
+      
+      <div class="col-6">
+        <label class="block text-sm font-medium text-color-secondary">Estado</label>
+        <p-chip 
+          [label]="claseSeleccionada.estado" 
+          [icon]="getIconByEstado(claseSeleccionada.estado!)"
+          [styleClass]="'p-chip-' + getSeverityByEstado(claseSeleccionada.estado!)"
+          styleClass="mt-1">
+        </p-chip>
+      </div>
+      
+      <div class="col-6">
+        <label class="block text-sm font-medium text-color-secondary">Fecha Programada</label>
+        <p class="mt-1">{{ claseSeleccionada.fechaProgramada | date:'dd/MM/yyyy HH:mm' }}</p>
+      </div>
+      
+      <div class="col-6">
+        <label class="block text-sm font-medium text-color-secondary">Duración</label>
+        <p class="mt-1">{{ claseService.obtenerDuracionFormateada(claseSeleccionada) }}</p>
+      </div>
+      
+      <div class="col-12">
+        <label class="block text-sm font-medium text-color-secondary">Código de Sala</label>
+        <div class="flex align-items-center gap-2 mt-1">
+          <span class="font-mono p-2 surface-100 border-round">{{ claseSeleccionada.codigoSala }}</span>
+          <p-button 
+            icon="pi pi-copy"
+            severity="secondary"
+            [outlined]="true"
+            size="small"
+            pTooltip="Copiar código">
+          </p-button>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <!-- Controles -->
-  <div class="controls-panel">
-    <p-button 
-      *ngIf="isInstructor && connectionState === 'disconnected'"
-      label="Iniciar Clase" 
-      icon="pi pi-play" 
-      (onClick)="iniciarClase()">
-    </p-button>
-
-    <p-button 
-      *ngIf="!isInstructor && connectionState === 'disconnected'"
-      label="Unirse a Clase" 
-      icon="pi pi-sign-in" 
-      (onClick)="unirseAClase()">
-    </p-button>
-
-    <div *ngIf="connectionState !== 'disconnected'" class="active-controls">
+    <ng-template pTemplate="footer">
       <p-button 
-        [icon]="isVideoEnabled ? 'pi pi-video' : 'pi pi-eye-slash'"
-        [severity]="isVideoEnabled ? 'secondary' : 'danger'"
-        (onClick)="toggleVideo()">
+        label="Cerrar"
+        icon="pi pi-times"
+        severity="secondary"
+        (onClick)="mostrarDialogoDetalle = false">
       </p-button>
-
+      
       <p-button 
-        [icon]="isAudioEnabled ? 'pi pi-volume-up' : 'pi pi-volume-off'"
-        [severity]="isAudioEnabled ? 'secondary' : 'danger'"
-        (onClick)="toggleAudio()">
+        *ngIf="claseSeleccionada?.estado === EstadoClase.EN_VIVO"
+        label="Unirse"
+        icon="pi pi-sign-in"
+        (onClick)="unirseAClase(claseSeleccionada!); mostrarDialogoDetalle = false">
       </p-button>
+    </ng-template>
+  </p-dialog>
 
-      <p-button 
-        *ngIf="isInstructor"
-        label="Finalizar Clase" 
-        icon="pi pi-stop" 
-        severity="danger"
-        (onClick)="finalizarClase()">
-      </p-button>
-
-      <p-button 
-        *ngIf="!isInstructor"
-        label="Salir" 
-        icon="pi pi-sign-out" 
-        severity="danger"
-        (onClick)="salirDeClase()">
-      </p-button>
-    </div>
-  </div>
+  <!-- Toast y Confirmación -->
+  <p-toast position="top-right"></p-toast>
+  <p-confirmDialog></p-confirmDialog>
 </div>
-
-<p-toast></p-toast>

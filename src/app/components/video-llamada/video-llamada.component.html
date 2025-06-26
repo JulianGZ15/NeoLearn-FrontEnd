@@ -1,0 +1,330 @@
+<!-- video-call.component.html -->
+<div class="video-call-container" [class.loading]="loading">
+  
+  <!-- Loading Overlay -->
+  <div *ngIf="loading" class="loading-overlay">
+    <div class="loading-content">
+      <p-progressSpinner styleClass="mb-3"></p-progressSpinner>
+      <h3>Conectando a la clase...</h3>
+      <p class="text-color-secondary">{{ clase?.titulo }}</p>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-container">
+    <p-card styleClass="error-card">
+      <div class="text-center">
+        <i class="pi pi-exclamation-triangle text-6xl text-red-500 mb-3"></i>
+        <h2 class="text-red-500 mb-3">Error de Conexión</h2>
+        <p class="mb-4">{{ error }}</p>
+        <div class="flex gap-2 justify-content-center">
+          <p-button 
+            label="Reintentar"
+            icon="pi pi-refresh"
+            (onClick)="inicializarVideoCall()"
+            severity="danger">
+          </p-button>
+          <p-button 
+            label="Volver"
+            icon="pi pi-arrow-left"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="salirDeLlamada()">
+          </p-button>
+        </div>
+      </div>
+    </p-card>
+  </div>
+
+  <!-- Main Video Call Interface -->
+  <div *ngIf="!loading && !error" class="video-interface">
+    
+    <!-- Header con información de la clase -->
+    <div class="video-header">
+      <p-toolbar styleClass="video-toolbar">
+        <ng-template pTemplate="start">
+          <div class="flex align-items-center">
+            <p-chip 
+              [label]="isConnected ? 'Conectado' : 'Desconectado'"
+              [icon]="isConnected ? 'pi pi-check-circle' : 'pi pi-times-circle'"
+              [styleClass]="isConnected ? 'p-chip-success' : 'p-chip-danger'"
+              styleClass="mr-3">
+            </p-chip>
+            
+            <div>
+              <h4 class="m-0">{{ clase?.titulo }}</h4>
+              <small class="text-color-secondary">
+                Instructor: {{ clase?.instructorNombre }} • 
+                Participantes: {{ totalParticipantes }}
+              </small>
+            </div>
+          </div>
+        </ng-template>
+
+        <ng-template pTemplate="end">
+          <div class="flex gap-2">
+            <!-- Controles de audio/video -->
+            <p-button 
+              [icon]="isAudioEnabled ? 'pi pi-microphone' : 'pi pi-microphone-slash'"
+              [severity]="isAudioEnabled ? 'success' : 'danger'"
+              [rounded]="true"
+              (onClick)="toggleAudio()"
+              [pTooltip]="isAudioEnabled ? 'Silenciar micrófono' : 'Activar micrófono'">
+            </p-button>
+            
+            <p-button 
+              [icon]="isVideoEnabled ? 'pi pi-video' : 'pi pi-eye-slash'"
+              [severity]="isVideoEnabled ? 'success' : 'danger'"
+              [rounded]="true"
+              (onClick)="toggleVideo()"
+              [pTooltip]="isVideoEnabled ? 'Desactivar cámara' : 'Activar cámara'">
+            </p-button>
+            
+            <p-button 
+              [icon]="isScreenSharing ? 'pi pi-desktop' : 'pi pi-share-alt'"
+              [severity]="isScreenSharing ? 'info' : 'secondary'"
+              [rounded]="true"
+              (onClick)="compartirPantalla()"
+              [pTooltip]="isScreenSharing ? 'Dejar de compartir' : 'Compartir pantalla'">
+            </p-button>
+            
+            <!-- Toggle panels -->
+            <p-button 
+              icon="pi pi-users"
+              [severity]="showParticipants ? 'primary' : 'secondary'"
+              [rounded]="true"
+              (onClick)="showParticipants = !showParticipants"
+              pTooltip="Mostrar/ocultar participantes">
+            </p-button>
+            
+            <p-button 
+              icon="pi pi-comments"
+              [severity]="showChat ? 'primary' : 'secondary'"
+              [rounded]="true"
+              (onClick)="showChat = !showChat"
+              pTooltip="Mostrar/ocultar chat">
+            </p-button>
+            
+            <!-- Salir -->
+            <p-button 
+              icon="pi pi-sign-out"
+              severity="danger"
+              [rounded]="true"
+              (onClick)="salirDeLlamada()"
+              pTooltip="Salir de la clase">
+            </p-button>
+          </div>
+        </ng-template>
+      </p-toolbar>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="video-content">
+      
+      <!-- Videos Grid -->
+      <div class="videos-section" [class.with-sidebar]="showParticipants || showChat">
+        
+        <!-- Video Principal (Local o Presentador) -->
+        <div class="main-video-container">
+          <p-card styleClass="video-card main-video-card">
+            <ng-template pTemplate="header">
+              <div class="video-header-info">
+                <span class="video-title">
+                  <i class="pi pi-user mr-2"></i>
+                  Tú {{ isScreenSharing ? '(Compartiendo pantalla)' : '' }}
+                </span>
+                <div class="video-controls-mini">
+                  <p-chip 
+                    *ngIf="!isAudioEnabled"
+                    icon="pi pi-microphone-slash"
+                    severity="danger"
+                    size="small">
+                  </p-chip>
+                  <p-chip 
+                    *ngIf="!isVideoEnabled"
+                    icon="pi pi-eye-slash"
+                    severity="warning"
+                    size="small">
+                  </p-chip>
+                </div>
+              </div>
+            </ng-template>
+
+            <div class="video-container main-video">
+              <video 
+                #localVideo 
+                autoplay 
+                muted 
+                playsinline 
+                class="w-full h-full">
+              </video>
+              
+              <!-- Overlay cuando video está desactivado -->
+              <div *ngIf="!isVideoEnabled" class="video-disabled-overlay">
+                <p-avatar 
+                  icon="pi pi-user"
+                  size="xlarge"
+                  styleClass="video-avatar">
+                </p-avatar>
+                <p class="mt-2">Cámara desactivada</p>
+              </div>
+            </div>
+          </p-card>
+        </div>
+
+        <!-- Videos de Participantes -->
+        <div *ngIf="participantesArray.length > 0" class="participants-videos">
+          <div class="participants-grid" [attr.data-count]="participantesArray.length">
+            <div 
+              *ngFor="let participante of participantesArray; trackBy: trackByParticipante"
+              class="participant-video-item">
+              
+              <p-card styleClass="video-card participant-video-card">
+                <ng-template pTemplate="header">
+                  <div class="video-header-info">
+                    <span class="video-title">
+                      <i class="pi pi-user mr-1"></i>
+                      {{ getParticipantName(participante.id) }}
+                    </span>
+                    <div class="video-controls-mini">
+                      <p-chip 
+                        *ngIf="!participante.isAudioEnabled"
+                        icon="pi pi-microphone-slash"
+                        severity="danger"
+                        size="small">
+                      </p-chip>
+                      <p-chip 
+                        *ngIf="!participante.isVideoEnabled"
+                        icon="pi pi-eye-slash"
+                        severity="warning"
+                        size="small">
+                      </p-chip>
+                    </div>
+                  </div>
+                </ng-template>
+
+                <div class="video-container participant-video">
+                  <video 
+                    *ngIf="participante.stream"
+                    [srcObject]="participante.stream"
+                    autoplay 
+                    playsinline 
+                    class="w-full h-full">
+                  </video>
+                  
+                  <!-- Placeholder cuando no hay stream -->
+                  <div *ngIf="!participante.stream" class="video-placeholder">
+                    <p-progressSpinner size="small"></p-progressSpinner>
+                    <p class="mt-2 text-sm">Conectando...</p>
+                  </div>
+                  
+                  <!-- Overlay cuando video está desactivado -->
+                  <div *ngIf="!participante.isVideoEnabled && participante.stream" class="video-disabled-overlay">
+                    <p-avatar 
+                      [label]="getParticipantInitials(participante.id)"
+                      size="large"
+                      styleClass="video-avatar">
+                    </p-avatar>
+                    <p class="mt-2 text-sm">Cámara desactivada</p>
+                  </div>
+                </div>
+              </p-card>
+            </div>
+          </div>
+        </div>
+
+        <!-- Estado cuando no hay participantes -->
+        <div *ngIf="participantesArray.length === 0" class="no-participants">
+          <p-card styleClass="no-participants-card">
+            <div class="text-center p-4">
+              <i class="pi pi-users text-4xl text-color-secondary mb-3"></i>
+              <h4 class="text-color-secondary">Esperando participantes...</h4>
+              <p class="text-color-secondary">
+                Comparte el código de sala: 
+                <span class="font-mono font-bold">{{ codigoSala }}</span>
+              </p>
+            </div>
+          </p-card>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div *ngIf="showParticipants || showChat" class="sidebar">
+        
+        <!-- Panel de Participantes -->
+        <p-card *ngIf="showParticipants" header="Participantes" styleClass="participants-panel mb-3">
+          <div class="participants-list">
+            <!-- Usuario actual -->
+            <div class="participant-item current-user">
+              <p-avatar 
+                icon="pi pi-user"
+                styleClass="mr-2"
+                size="normal">
+              </p-avatar>
+              <div class="participant-info">
+                <span class="participant-name">Tú</span>
+                <div class="participant-status">
+                  <i [class]="isAudioEnabled ? 'pi pi-microphone text-green-500' : 'pi pi-microphone-slash text-red-500'"></i>
+                  <i [class]="isVideoEnabled ? 'pi pi-video text-green-500' : 'pi pi-eye-slash text-red-500'" class="ml-1"></i>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Otros participantes -->
+            <div 
+              *ngFor="let participante of participantesArray"
+              class="participant-item">
+              <p-avatar 
+                [label]="getParticipantInitials(participante.id)"
+                styleClass="mr-2"
+                size="normal">
+              </p-avatar>
+              <div class="participant-info">
+                <span class="participant-name">{{ getParticipantName(participante.id) }}</span>
+                <div class="participant-status">
+                  <i [class]="participante.isAudioEnabled ? 'pi pi-microphone text-green-500' : 'pi pi-microphone-slash text-red-500'"></i>
+                  <i [class]="participante.isVideoEnabled ? 'pi pi-video text-green-500' : 'pi pi-eye-slash text-red-500'" class="ml-1"></i>
+                </div>
+              </div>
+              <p-chip 
+                [label]="getConnectionStatus(participante)"
+                [styleClass]="getConnectionSeverity(participante)"
+                size="small">
+              </p-chip>
+            </div>
+          </div>
+        </p-card>
+
+        <!-- Panel de Chat -->
+        <p-card *ngIf="showChat" header="Chat" styleClass="chat-panel">
+          <div class="chat-container">
+            <div class="chat-messages">
+              <!-- Aquí irían los mensajes del chat -->
+              <div class="text-center text-color-secondary p-4">
+                <i class="pi pi-comments text-3xl mb-2"></i>
+                <p>Chat próximamente disponible</p>
+              </div>
+            </div>
+            
+            <div class="chat-input">
+              <div class="p-inputgroup">
+                <input 
+                  type="text" 
+                  pInputText 
+                  placeholder="Escribe un mensaje..."
+                  class="chat-input-field">
+                <p-button 
+                  icon="pi pi-send"
+                  severity="primary">
+                </p-button>
+              </div>
+            </div>
+          </div>
+        </p-card>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast para notificaciones -->
+  <p-toast position="top-right"></p-toast>
+</div>

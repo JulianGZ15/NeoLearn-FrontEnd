@@ -1,0 +1,6 @@
+export enum EstadoClase {
+  PROGRAMADA = 'PROGRAMADA',
+  EN_VIVO = 'EN_VIVO',
+  FINALIZADA = 'FINALIZADA',
+  CANCELADA = 'CANCELADA'
+}
