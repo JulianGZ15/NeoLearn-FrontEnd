@@ -21,9 +21,19 @@ private getHeaders(): HttpHeaders {
       'Authorization': `Bearer ${token}`
     });
   }
-
   obtenerUsuarioPorId(cveUsuario: number): Observable<UsuarioDTO> {
     const headers = this.getHeaders();
     return this.http.get<UsuarioDTO>(`${this.apiUrl}/${cveUsuario}`, { headers });
   }
+  
+    obtenerUsuario(): Observable<UsuarioDTO> {
+    const headers = this.getHeaders();
+    return this.http.get<UsuarioDTO>(`${this.apiUrl}`, { headers });
+  }
+  
+    actualizarUsuario(usuario: UsuarioDTO): Observable<UsuarioDTO>{
+      const headers = this.getHeaders();
+      return this.http.put<UsuarioDTO>(`${this.apiUrl}`, usuario, {headers})
+
+    }
 }

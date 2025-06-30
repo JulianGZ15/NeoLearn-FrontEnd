@@ -1,7 +1,8 @@
-export interface UsuarioDTO {
+export interface userRegister {
   cveUsuario?: number;
   nombre?: string;
   correo?: string;
+password?: string;
   tipo?: string; // Enum como string
   fecha_registro?: string; // ISO date string
   fotoperfil : string;

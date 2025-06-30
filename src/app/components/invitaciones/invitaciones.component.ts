@@ -27,27 +27,27 @@ import { InvitacionService } from '../../Services/invitacion.service';
 
 @Component({
   selector: 'app-invitaciones',
-    standalone: true,
-   imports: [
-        CommonModule,
-        TableModule,
-        FormsModule,
-        ButtonModule,
-        RippleModule,
-        ToastModule,
-        ToolbarModule,
-        RatingModule,
-        InputTextModule,
-        TextareaModule,
-        SelectModule,
-        RadioButtonModule,
-        InputNumberModule,
-        DialogModule,
-        TagModule,
-        InputIconModule,
-        IconFieldModule,
-        ConfirmDialogModule
-    ],
+  standalone: true,
+  imports: [
+    CommonModule,
+    TableModule,
+    FormsModule,
+    ButtonModule,
+    RippleModule,
+    ToastModule,
+    ToolbarModule,
+    RatingModule,
+    InputTextModule,
+    TextareaModule,
+    SelectModule,
+    RadioButtonModule,
+    InputNumberModule,
+    DialogModule,
+    TagModule,
+    InputIconModule,
+    IconFieldModule,
+    ConfirmDialogModule
+  ],
   templateUrl: './invitaciones.component.html',
   styleUrl: './invitaciones.component.scss'
 })
@@ -64,7 +64,7 @@ export class InvitacionesComponent implements OnInit {
   constructor(
     private invitacionService: InvitacionService,
     private messageService: MessageService
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.cols = [
@@ -87,8 +87,9 @@ export class InvitacionesComponent implements OnInit {
       next: (data) => {
         this.invitaciones = data.map(inv => ({
           ...inv,
-          estatus: inv.usado ? 'Inactivo' : 'Activo'
+          estatus: inv.usado ? 'Usado' : 'Activo'
         }));
+
         this.aplicarFiltroEstatus();
       },
       error: () => this.messageService.add({
@@ -105,9 +106,10 @@ export class InvitacionesComponent implements OnInit {
   }
 
   generarInvitacion() {
-    this.generando = true;
-    this.invitacionService.generarInvitacion().subscribe({
-      next: (token: string) => {
+this.generando = true;
+  this.invitacionService.generarInvitacion().subscribe({
+    next: (response) => {
+      const token = response;
         this.copiarAlPortapapeles(this.generarUrl(token));
         this.messageService.add({
           severity: 'success',
@@ -120,7 +122,8 @@ export class InvitacionesComponent implements OnInit {
           this.generando = false;
         }, 500);
       },
-      error: () => {
+      error: (error) => {
+        console.error('Error al generar invitación:', error); // Para debugging
         this.generando = false;
         this.messageService.add({
           severity: 'error',
@@ -168,11 +171,12 @@ export class InvitacionesComponent implements OnInit {
 
   aplicarFiltroEstatus() {
     if (this.filtroEstatus === 'activo') {
-      this.invitacionesFiltradas = this.invitaciones.filter(i => i.usado === false);
+      this.invitacionesFiltradas = this.invitaciones.filter(i => !i.usado); // ✅ Lógica corregida
     } else if (this.filtroEstatus === 'inactivo') {
-      this.invitacionesFiltradas = this.invitaciones.filter(i => i.usado === true);
+      this.invitacionesFiltradas = this.invitaciones.filter(i => i.usado); // ✅ Lógica corregida
     } else {
       this.invitacionesFiltradas = [...this.invitaciones];
     }
   }
+
 }

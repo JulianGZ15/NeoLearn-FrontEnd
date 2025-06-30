@@ -18,6 +18,6 @@ export const appConfig: ApplicationConfig = {
         provideAnimationsAsync(),
         providePrimeNG({ theme: { preset: Aura, options: { darkModeSelector: '.app-dark' } } }),
         MessageService,            // <-- Añade aquí
-        ConfirmationService        // <-- Y aquí
+        ConfirmationService,
     ]
 };

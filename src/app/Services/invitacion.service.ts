@@ -23,13 +23,18 @@ export class InvitacionService {
   }
 
 
-    generarInvitacion(): Observable<string> {
-      return this.http.post<string>(
-        `${this.apiUrl}/generar`,
-        {},
-        { headers: this.getHeaders() }
-      );
+generarInvitacion(): Observable<string> {
+  return this.http.post<string>(
+    `${this.apiUrl}/generar`,
+    {},
+    { 
+      headers: this.getHeaders(),
+      responseType: 'text' as 'json' // Especifica que esperas texto
     }
+  );
+}
+
+
 
     registrar(dto: TokenInvitacionEmpresaDTO, token: string): Observable<HttpResponse<void>> {
       return this.http.post<void>(

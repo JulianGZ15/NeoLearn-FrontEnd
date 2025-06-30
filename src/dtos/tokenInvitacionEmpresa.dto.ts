@@ -4,5 +4,5 @@ export interface TokenInvitacionEmpresaDTO {
   empresaId?: number;
   fechaExpiracion?: string; // ISO date-time string
   fechaCreacion?: string; // ISO date-time string
-  usado?: boolean;
+  usado: boolean;
 }

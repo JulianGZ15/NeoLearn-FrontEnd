@@ -1,20 +1,23 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import { User } from '../../models/user';
+import { UsuarioDTO } from '../../dtos/usuario.dto';
+import { EmpresaDTO } from '../../dtos/empresa.dto';
+import { userRegister } from '../../dtos/register.dto';
 
 @Injectable({
   providedIn: 'root'
 })
 export class RegisterService {
 
-  private url: string = 'http://localhost:8080/auth/register';
+  private url: string = 'http://localhost:8080/api/auth/register';
 
   constructor(private http: HttpClient) { }
 
 
 
-  createUser(user: User): Observable<any>{
-    return this.http.post(this.url, user)
+  createUser(user: userRegister, dto: EmpresaDTO): Observable<any>{
+    const body = { user, empresa: dto };
+    return this.http.post(this.url, body);
   }
 }

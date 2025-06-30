@@ -1,0 +1,440 @@
+<div class="profile-container">
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+  
+  <div class="profile-header">
+    <div class="user-avatar">
+      <p-avatar 
+        [label]="getUserInitials(usuario?.nombre)" 
+        size="xlarge" 
+        shape="circle"
+        [style]="{'background-color': '#007ad9', 'color': 'white'}"
+      ></p-avatar>
+    </div>
+    <div class="user-info">
+      <h1 class="user-name">{{ usuario?.nombre || 'Cargando...' }}</h1>
+      <p class="user-email">{{ usuario?.correo }}</p>
+      <p-tag 
+        [value]="usuario?.tipo" 
+        [severity]="usuario?.tipo === 'EMPRESARIAL' ? 'info' : 'secondary'"
+      ></p-tag>
+    </div>
+  </div>
+
+  <p-tabView>
+    <!-- Tab: Información Personal -->
+    <p-tabPanel header="Información Personal" leftIcon="pi pi-user">
+      <div class="tab-content">
+        <div class="section-header">
+          <h3>Datos Personales</h3>
+          <p-button 
+            *ngIf="!isEditingUser"
+            label="Editar" 
+            icon="pi pi-pencil" 
+            severity="secondary"
+            size="small"
+            (onClick)="toggleUserEdit()"
+          ></p-button>
+          <div *ngIf="isEditingUser" class="edit-buttons">
+            <p-button 
+              label="Cancelar" 
+              icon="pi pi-times" 
+              severity="secondary"
+              size="small"
+              (onClick)="toggleUserEdit()"
+            ></p-button>
+            <p-button 
+              label="Guardar" 
+              icon="pi pi-check" 
+              size="small"
+              [loading]="isSavingUser"
+              (onClick)="saveUserChanges()"
+            ></p-button>
+          </div>
+        </div>
+
+        <div class="form-container" *ngIf="!isLoadingUser; else userSkeleton">
+          <form [formGroup]="userForm" class="profile-form">
+            
+            <!-- Información básica -->
+            <div class="form-section">
+              <h4>Información Básica</h4>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="nombre">Nombre Completo</label>
+                  <input 
+                    id="nombre" 
+                    type="text" 
+                    pInputText 
+                    formControlName="nombre"
+                    [readonly]="!isEditingUser"
+                    [class.readonly]="!isEditingUser"
+                  />
+                  <small 
+                    class="p-error" 
+                    *ngIf="userForm.get('nombre')?.invalid && userForm.get('nombre')?.touched"
+                  >
+                    El nombre es requerido
+                  </small>
+                </div>
+
+                <div class="field">
+                  <label for="correo">Correo Electrónico</label>
+                  <input 
+                    id="correo" 
+                    type="email" 
+                    pInputText 
+                    formControlName="correo"
+                    [readonly]="!isEditingUser"
+                    [class.readonly]="!isEditingUser"
+                  />
+                  <small 
+                    class="p-error" 
+                    *ngIf="userForm.get('correo')?.invalid && userForm.get('correo')?.touched"
+                  >
+                    Ingresa un correo válido
+                  </small>
+                </div>
+
+                <div class="field">
+                  <label for="telefono">Teléfono</label>
+                  <input 
+                    id="telefono" 
+                    type="tel" 
+                    pInputText 
+                    formControlName="telefono"
+                    [readonly]="!isEditingUser"
+                    [class.readonly]="!isEditingUser"
+                  />
+                  <small 
+                    class="p-error" 
+                    *ngIf="userForm.get('telefono')?.invalid && userForm.get('telefono')?.touched"
+                  >
+                    Ingresa un teléfono válido
+                  </small>
+                </div>
+
+                <div class="field">
+                  <label for="tipo">Tipo de Usuario</label>
+                  <input 
+                    id="tipo" 
+                    type="text" 
+                    pInputText 
+                    formControlName="tipo"
+                    readonly
+                    class="readonly"
+                  />
+                </div>
+
+                <div class="field">
+                  <label for="fechaRegistro">Fecha de Registro</label>
+                  <input 
+                    id="fechaRegistro" 
+                    type="text" 
+                    pInputText 
+                    [value]="formatDate(usuario?.fecha_registro)"
+                    readonly
+                    class="readonly"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Dirección -->
+            <div class="form-section">
+              <h4>Dirección</h4>
+              <div class="form-grid">
+                <div class="field address-field" *ngIf="isEditingUser">
+                  <label for="direccion">Buscar Nueva Dirección</label>
+                  <div class="address-input-container">
+                    <input 
+                      id="direccion" 
+                      type="text" 
+                      pInputText 
+                      formControlName="direccionInput"
+                      placeholder="Escribe para buscar..."
+                      (input)="onAddressInput($event)"
+                      autocomplete="off"
+                    />
+                    
+                    <div *ngIf="isLoadingAddresses" class="loading-indicator">
+                      <i class="pi pi-spin pi-spinner"></i>
+                    </div>
+                    
+                    <div *ngIf="showSuggestions" class="address-suggestions">
+                      <div 
+                        *ngFor="let suggestion of addressSuggestions" 
+                        class="suggestion-item"
+                        (click)="selectAddress(suggestion)"
+                      >
+                        <div class="suggestion-main">
+                          <i class="pi pi-map-marker mr-2"></i>
+                          {{ suggestion.display_name }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="field full-width">
+                  <label for="direccionCompleta">Dirección Completa</label>
+                  <textarea 
+                    id="direccionCompleta" 
+                    pInputTextarea 
+                    formControlName="direccion_completa"
+                    [readonly]="!isEditingUser"
+                    [class.readonly]="!isEditingUser"
+                    rows="2"
+                  ></textarea>
+                </div>
+
+                <div class="field">
+                  <label for="calle">Calle</label>
+                  <input 
+                    id="calle" 
+                    type="text" 
+                    pInputText 
+                    formControlName="calle"
+                    [readonly]="!isEditingUser"
+                    [class.readonly]="!isEditingUser"
+                  />
+                </div>
+
+                <div class="field">
+                  <label for="colonia">Colonia</label>
+                  <input 
+                    id="colonia" 
+                    type="text" 
+                    pInputText 
+                    formControlName="colonia"
+                    [readonly]="!isEditingUser"
+                    [class.readonly]="!isEditingUser"
+                  />
+                </div>
+
+                <div class="field">
+                  <label for="ciudad">Ciudad</label>
+                  <input 
+                    id="ciudad" 
+                    type="text" 
+                    pInputText 
+                    formControlName="ciudad"
+                    [readonly]="!isEditingUser"
+                    [class.readonly]="!isEditingUser"
+                  />
+                </div>
+
+                <div class="field">
+                  <label for="estado">Estado</label>
+                  <input 
+                    id="estado" 
+                    type="text" 
+                    pInputText 
+                    formControlName="estado"
+                    [readonly]="!isEditingUser"
+                    [class.readonly]="!isEditingUser"
+                  />
+                </div>
+
+                <div class="field">
+                  <label for="codigoPostal">Código Postal</label>
+                  <input 
+                    id="codigoPostal" 
+                    type="text" 
+                    pInputText 
+                    formControlName="codigo_postal"
+                    [readonly]="!isEditingUser"
+                    [class.readonly]="!isEditingUser"
+                  />
+                </div>
+
+                <div class="field">
+                  <label for="pais">País</label>
+                  <input 
+                    id="pais" 
+                    type="text" 
+                    pInputText 
+                    formControlName="pais"
+                    [readonly]="!isEditingUser"
+                    [class.readonly]="!isEditingUser"
+                  />
+                </div>
+              </div>
+
+              <div *ngIf="selectedAddressComponents" class="selected-address">
+                <strong>
+                  <i class="pi pi-map-marker mr-2"></i>
+                  Ubicación:
+                </strong>
+                <p>Lat: {{ selectedAddressComponents.latitud }}, Lng: {{ selectedAddressComponents.longitud }}</p>
+              </div>
+            </div>
+
+            <!-- Foto de perfil -->
+            <div class="form-section" *ngIf="isEditingUser">
+              <h4>Foto de Perfil</h4>
+              <p-fileUpload 
+                mode="basic" 
+                accept="image/*" 
+                maxFileSize="1000000"
+                (onSelect)="onFileSelect($event)"
+                chooseLabel="Cambiar Foto"
+              ></p-fileUpload>
+            </div>
+
+          </form>
+        </div>
+
+        <ng-template #userSkeleton>
+          <div class="skeleton-container">
+            <p-skeleton height="2rem" class="mb-3"></p-skeleton>
+            <p-skeleton height="2rem" class="mb-3"></p-skeleton>
+            <p-skeleton height="2rem" class="mb-3"></p-skeleton>
+            <p-skeleton height="4rem"></p-skeleton>
+          </div>
+        </ng-template>
+      </div>
+    </p-tabPanel>
+
+    <!-- Tab: Información de Empresa -->
+    <p-tabPanel header="Mi Empresa" leftIcon="pi pi-building">
+      <div class="tab-content">
+        
+        <!-- Selector de empresa si hay múltiples -->
+        <div *ngIf="empresas.length > 1" class="company-selector">
+          <h4>Seleccionar Empresa</h4>
+          <div class="company-cards">
+            <div 
+              *ngFor="let empresa of empresas" 
+              class="company-card"
+              [class.selected]="selectedEmpresa?.cveEmpresa === empresa.cveEmpresa"
+              (click)="selectCompany(empresa)"
+            >
+              <h5>{{ empresa.nombre }}</h5>
+              <p-tag 
+                [value]="getStatusText(empresa.esta_activo)" 
+                [severity]="getStatusSeverity(empresa.esta_activo)"
+              ></p-tag>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="selectedEmpresa" class="company-details">
+          <div class="section-header">
+            <h3>{{ selectedEmpresa.nombre }}</h3>
+            <p-button 
+              *ngIf="!isEditingCompany"
+              label="Editar Nombre" 
+              icon="pi pi-pencil" 
+              severity="secondary"
+              size="small"
+              (onClick)="toggleCompanyEdit()"
+            ></p-button>
+            <div *ngIf="isEditingCompany" class="edit-buttons">
+              <p-button 
+                label="Cancelar" 
+                icon="pi pi-times" 
+                severity="secondary"
+                size="small"
+                (onClick)="toggleCompanyEdit()"
+              ></p-button>
+              <p-button 
+                label="Guardar" 
+                icon="pi pi-check" 
+                size="small"
+                [loading]="isSavingCompany"
+                (onClick)="saveCompanyChanges()"
+              ></p-button>
+            </div>
+          </div>
+
+          <div class="form-container" *ngIf="!isLoadingCompanies; else companySkeleton">
+            <form [formGroup]="companyForm" class="profile-form">
+              <div class="form-section">
+                <div class="form-grid">
+                  <div class="field">
+                    <label for="nombreEmpresa">Nombre de la Empresa</label>
+                    <input 
+                      id="nombreEmpresa" 
+                      type="text" 
+                      pInputText 
+                      formControlName="nombre"
+                      [readonly]="!isEditingCompany"
+                      [class.readonly]="!isEditingCompany"
+                    />
+                    <small 
+                      class="p-error" 
+                      *ngIf="companyForm.get('nombre')?.invalid && companyForm.get('nombre')?.touched"
+                    >
+                      El nombre de la empresa es requerido
+                    </small>
+                  </div>
+
+                  <div class="field">
+                    <label for="tipoPlan">Tipo de Plan</label>
+                    <input 
+                      id="tipoPlan" 
+                      type="text" 
+                      pInputText 
+                      formControlName="tipo_plan"
+                      readonly
+                      class="readonly"
+                    />
+                  </div>
+
+                  <div class="field">
+                    <label for="fechaInicio">Fecha de Inicio</label>
+                    <input 
+                      id="fechaInicio" 
+                      type="text" 
+                      pInputText 
+                      [value]="formatDate(selectedEmpresa.fecha_inicio_plan)"
+                      readonly
+                      class="readonly"
+                    />
+                  </div>
+
+                  <div class="field">
+                    <label for="fechaFin">Fecha de Vencimiento</label>
+                    <input 
+                      id="fechaFin" 
+                      type="text" 
+                      pInputText 
+                      [value]="formatDate(selectedEmpresa.fecha_fin_plan)"
+                      readonly
+                      class="readonly"
+                    />
+                  </div>
+
+                  <div class="field">
+                    <label>Estado</label>
+                    <div class="status-field">
+                      <p-tag 
+                        [value]="getStatusText(selectedEmpresa.esta_activo)" 
+                        [severity]="getStatusSeverity(selectedEmpresa.esta_activo)"
+                      ></p-tag>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <ng-template #companySkeleton>
+            <div class="skeleton-container">
+              <p-skeleton height="2rem" class="mb-3"></p-skeleton>
+              <p-skeleton height="2rem" class="mb-3"></p-skeleton>
+              <p-skeleton height="2rem" class="mb-3"></p-skeleton>
+            </div>
+          </ng-template>
+        </div>
+
+        <div *ngIf="!selectedEmpresa && !isLoadingCompanies" class="no-company">
+          <i class="pi pi-building text-4xl text-gray-400 mb-3"></i>
+          <h4>No hay empresas asociadas</h4>
+          <p>No tienes empresas asociadas a tu cuenta.</p>
+        </div>
+      </div>
+    </p-tabPanel>
+  </p-tabView>
+</div>

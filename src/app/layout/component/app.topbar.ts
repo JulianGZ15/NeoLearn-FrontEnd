@@ -64,7 +64,7 @@ import { LayoutService } from '../service/layout.service';
 
             <div class="layout-topbar-menu hidden lg:block">
                 <div class="layout-topbar-menu-content">
-                    <button type="button" class="layout-topbar-action">
+                    <button type="button" class="layout-topbar-action" routerLink="calendario-clases">
                         <i class="pi pi-calendar"></i>
                         <span>Calendar</span>
                     </button>
@@ -72,7 +72,7 @@ import { LayoutService } from '../service/layout.service';
                         <i class="pi pi-inbox"></i>
                         <span>Messages</span>
                     </button>
-                    <button type="button" class="layout-topbar-action">
+                    <button type="button" class="layout-topbar-action" routerLink="perfil">
                         <i class="pi pi-user"></i>
                         <span>Profile</span>
                     </button>

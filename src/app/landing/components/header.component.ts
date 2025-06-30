@@ -34,9 +34,10 @@ import { Router, RouterModule } from '@angular/router';
               [routerLink]="['/auth']">
             </p-button>
             <p-button 
-              label="Comenzar Gratis" 
+              label="Registrate" 
               styleClass="btn-primary"
-              size="small">
+              size="small"
+              [routerLink]="['/register']">
             </p-button>
           </div>
         </nav>

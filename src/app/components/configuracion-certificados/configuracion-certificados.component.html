@@ -1,1 +1,211 @@
-<p>configuracion-certificados works!</p>
+<div class="configuracion-certificados">
+  <p-card header="Configuración de Certificados" styleClass="mb-4">
+    
+    <!-- Tabs para organizar la configuración -->
+    <p-tabview>
+      
+      <!-- Tab de Logo -->
+      <p-tabpanel header="Logo" leftIcon="pi pi-image">
+        <div class="grid">
+          <div class="col-12 md:col-6">
+            <h5>Subir Logo</h5>
+            <p-fileupload 
+              #logoUpload
+              mode="basic" 
+              chooseLabel="Seleccionar Logo"
+              chooseIcon="pi pi-upload"
+              accept="image/*" 
+              maxFileSize="5000000"
+              [customUpload]="true"
+              (uploadHandler)="subirLogo($event)"
+              (onSelect)="onLogoSelect($event)"
+              [auto]="false">
+            </p-fileupload>
+            
+            <p-button 
+              label="Subir Logo" 
+              icon="pi pi-cloud-upload"
+              [disabled]="!logoSeleccionado || subiendoLogo"
+              [loading]="subiendoLogo"
+              (onClick)="confirmarSubidaLogo()"
+              styleClass="mt-2">
+            </p-button>
+            
+            <small class="block mt-2 text-muted-color">
+              Formatos permitidos: JPG, PNG, GIF. Tamaño máximo: 5MB
+            </small>
+          </div>
+          
+          <div class="col-12 md:col-6">
+            <h5>Vista Previa del Logo</h5>
+            <div class="preview-container">
+              <p-image 
+                *ngIf="configuracion.logo || logoPreview"
+                [src]="logoPreview || obtenerUrlLogo()"
+                alt="Logo Preview"
+                width="200"
+                height="150"
+                [preview]="true"
+                styleClass="logo-preview">
+              </p-image>
+              
+              <div *ngIf="!configuracion.logo && !logoPreview" 
+                   class="no-preview">
+                <i class="pi pi-image text-6xl text-muted-color"></i>
+                <p class="text-muted-color">No hay logo configurado</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </p-tabpanel>
+      
+      <!-- Tab de Firma -->
+      <p-tabpanel header="Firma" leftIcon="pi pi-file">
+        <div class="grid">
+          <div class="col-12 md:col-6">
+            <h5>Subir Firma</h5>
+            <p-fileupload 
+              #firmaUpload
+              mode="basic" 
+              chooseLabel="Seleccionar Firma"
+              chooseIcon="pi pi-upload"
+              accept="image/*" 
+              maxFileSize="5000000"
+              [customUpload]="true"
+              (uploadHandler)="subirFirma($event)"
+              (onSelect)="onFirmaSelect($event)"
+              [auto]="false">
+            </p-fileupload>
+            
+            <p-button 
+              label="Subir Firma" 
+              icon="pi pi-cloud-upload"
+              [disabled]="!firmaSeleccionada || subiendoFirma"
+              [loading]="subiendoFirma"
+              (onClick)="confirmarSubidaFirma()"
+              styleClass="mt-2">
+            </p-button>
+            
+            <small class="block mt-2 text-muted-color">
+              Formatos permitidos: JPG, PNG, GIF. Tamaño máximo: 5MB
+            </small>
+          </div>
+          
+          <div class="col-12 md:col-6">
+            <h5>Vista Previa de la Firma</h5>
+            <div class="preview-container">
+              <p-image 
+                *ngIf="configuracion.firma || firmaPreview"
+                [src]="firmaPreview || obtenerUrlFirma()"
+                alt="Firma Preview"
+                width="200"
+                height="150"
+                [preview]="true"
+                styleClass="firma-preview">
+              </p-image>
+              
+              <div *ngIf="!configuracion.firma && !firmaPreview" 
+                   class="no-preview">
+                <i class="pi pi-file text-6xl text-muted-color"></i>
+                <p class="text-muted-color">No hay firma configurada</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </p-tabpanel>
+      
+      <!-- Tab de Firmante -->
+      <p-tabpanel header="Firmante" leftIcon="pi pi-user">
+        <div class="grid">
+          <div class="col-12 md:col-8">
+            <h5>Nombre del Firmante</h5>
+            <div class="p-inputgroup">
+              <input 
+                type="text" 
+                pInputText 
+                [(ngModel)]="nombreFirmante"
+                placeholder="Ingrese el nombre del firmante"
+                class="w-full">
+              <p-button 
+                icon="pi pi-save"
+                [disabled]="!nombreFirmante || guardandoFirmante"
+                [loading]="guardandoFirmante"
+                (onClick)="guardarFirmante()">
+              </p-button>
+            </div>
+            
+            <small class="block mt-2 text-muted-color">
+              Este nombre aparecerá en los certificados generados
+            </small>
+            
+            <div *ngIf="configuracion.firmante" class="mt-3">
+              <p><strong>Firmante actual:</strong> {{ configuracion.firmante }}</p>
+            </div>
+          </div>
+        </div>
+      </p-tabpanel>
+      
+    </p-tabview>
+    
+    <!-- Sección de Vista Previa del Certificado -->
+    <p-divider></p-divider>
+    
+    <div class="preview-certificado mt-4">
+      <h4>Vista Previa del Certificado</h4>
+      <div class="certificado-mockup">
+        <div class="certificado-header">
+          <div class="logo-container">
+            <img *ngIf="configuracion.logo || logoPreview" 
+                 [src]="logoPreview || obtenerUrlLogo()" 
+                 alt="Logo" 
+                 class="certificado-logo">
+            <div *ngIf="!configuracion.logo && !logoPreview" 
+                 class="logo-placeholder">
+              <i class="pi pi-image"></i>
+              <span>Logo</span>
+            </div>
+          </div>
+          
+          <div class="certificado-title">
+            <h2>CERTIFICADO DE FINALIZACIÓN</h2>
+          </div>
+        </div>
+        
+        <div class="certificado-body">
+          <p>Se certifica que</p>
+          <h3 class="nombre-estudiante">[Nombre del Estudiante]</h3>
+          <p>ha completado satisfactoriamente el curso</p>
+          <h4 class="nombre-curso">[Nombre del Curso]</h4>
+        </div>
+        
+        <div class="certificado-footer">
+          <div class="firma-container">
+            <img *ngIf="configuracion.firma || firmaPreview" 
+                 [src]="firmaPreview || obtenerUrlFirma()" 
+                 alt="Firma" 
+                 class="certificado-firma">
+            <div *ngIf="!configuracion.firma && !firmaPreview" 
+                 class="firma-placeholder">
+              <i class="pi pi-file"></i>
+              <span>Firma</span>
+            </div>
+            <div class="firmante-nombre">
+              {{ configuracion.firmante || nombreFirmante || '[Nombre del Firmante]' }}
+            </div>
+          </div>
+          
+          <div class="fecha">
+            {{ fechaActual | date:'dd/MM/yyyy' }}
+          </div>
+        </div>
+      </div>
+    </div>
+    
+  </p-card>
+</div>
+
+<!-- Toast para mensajes -->
+<p-toast></p-toast>
+
+<!-- Dialog de confirmación -->
+<p-confirmDialog></p-confirmDialog>

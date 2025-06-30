@@ -1,0 +1,196 @@
+// calendario-clases.component.scss
+.calendario-clases-container {
+  .stat-card {
+    transition: all 0.3s ease;
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  .custom-calendar {
+    width: 100%;
+
+    .calendar-date-cell {
+      position: relative;
+      width: 100%;
+      height: 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 4px;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+
+      &.has-classes {
+        background: var(--primary-50);
+        border: 1px solid var(--primary-200);
+      }
+
+      &.has-active-classes {
+        background: var(--green-50);
+        border: 1px solid var(--green-200);
+        animation: pulse 2s infinite;
+      }
+
+      &.is-today {
+        background: var(--blue-100);
+        border: 2px solid var(--blue-500);
+        font-weight: bold;
+      }
+
+      .date-number {
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 2px;
+      }
+
+      .class-indicators {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        justify-content: center;
+        align-items: center;
+
+        .class-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: var(--primary-500);
+
+          &.active {
+            background: var(--green-500);
+            animation: blink 1s infinite;
+          }
+
+          &.can-start {
+            background: var(--orange-500);
+          }
+        }
+
+        .more-classes {
+          font-size: 8px;
+          background: var(--surface-500);
+          color: white;
+          padding: 1px 3px;
+          border-radius: 2px;
+        }
+      }
+    }
+  }
+
+  .classes-panel {
+    height: fit-content;
+    max-height: 600px;
+    overflow-y: auto;
+
+    .classes-list {
+      .class-item {
+        transition: all 0.3s ease;
+        cursor: pointer;
+
+        &:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        &.active-class {
+          border-color: var(--green-500);
+          background: var(--green-50);
+        }
+
+        &.can-start-class {
+          border-color: var(--orange-500);
+          background: var(--orange-50);
+        }
+
+        .class-info {
+          .pi {
+            font-size: 12px;
+          }
+        }
+      }
+    }
+
+    .empty-state {
+      padding: 2rem;
+    }
+  }
+
+  // Animaciones
+  @keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+  }
+
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.3; }
+  }
+
+  // Responsive
+  @media (max-width: 768px) {
+    .custom-calendar {
+      .calendar-date-cell {
+        height: 40px;
+        
+        .date-number {
+          font-size: 12px;
+        }
+
+        .class-indicators {
+          .class-dot {
+            width: 4px;
+            height: 4px;
+          }
+        }
+      }
+    }
+  }
+
+  // calendario-clases.component.scss
+.calendario-clases-container {
+  // ... estilos existentes
+
+  // ✅ Estilos personalizados para chips
+  ::ng-deep {
+    .chip-programada {
+      background-color: var(--blue-100);
+      color: var(--blue-800);
+      border: 1px solid var(--blue-200);
+    }
+
+    .chip-en-vivo {
+      background-color: var(--green-100);
+      color: var(--green-800);
+      border: 1px solid var(--green-200);
+      animation: pulse 2s infinite;
+    }
+
+    .chip-finalizada {
+      background-color: var(--gray-100);
+      color: var(--gray-800);
+      border: 1px solid var(--gray-200);
+    }
+
+    .chip-cancelada {
+      background-color: var(--red-100);
+      color: var(--red-800);
+      border: 1px solid var(--red-200);
+    }
+
+    .chip-default {
+      background-color: var(--surface-100);
+      color: var(--surface-800);
+      border: 1px solid var(--surface-200);
+    }
+  }
+
+  // ... resto de estilos
+}
+
+
+}

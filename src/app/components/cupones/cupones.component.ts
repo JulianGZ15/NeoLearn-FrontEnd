@@ -114,11 +114,12 @@ export class CuponesComponent implements OnInit {
     };
   }
 
-  openNew() {
-    this.cupon = this.nuevoCupon();
-    this.submitted = false;
-    this.cuponDialog = true;
-  }
+openNew() {
+  this.cupon = this.nuevoCupon();
+  this.submitted = false;
+  this.cuponDialog = true;
+}
+
 
   editCupon(cupon: CuponDTO) {
     this.cupon = { ...cupon };
@@ -189,64 +190,73 @@ export class CuponesComponent implements OnInit {
     this.submitted = false;
   }
 
-  saveCupon() {
-    this.submitted = true;
-    if (!this.cupon.codigo) return;
-
-    if (this.isDate(this.cupon.fecha_inicio)) {
-      this.cupon.fecha_inicio = this.formatDate(this.cupon.fecha_inicio as Date);
-    }
-    if (this.isDate(this.cupon.fecha_fin)) {
-      this.cupon.fecha_fin = this.formatDate(this.cupon.fecha_fin as Date);
-    }
-
-    if (this.cupon.cveCupon) {
-      this.cuponService.actualizarCupon(this.cupon.cveCupon, this.cupon).subscribe({
-        next: () => {
-          this.loadCupones();
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Completado',
-            detail: 'Cupón actualizado',
-            life: 3000
-          });
-          this.cuponDialog = false;
-        },
-        error: () => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'No se pudo actualizar el cupón',
-            life: 3000
-          });
-        }
-      });
-    } else {
-
-      this.cuponService.crearCupon(this.idCurso,this.cupon).subscribe({
-        next: () => {
-          this.loadCupones();
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Completado',
-            detail: 'Cupón creado',
-            life: 3000
-          });
-          this.cuponDialog = false;
-        },
-        error: () => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'No se pudo crear el cupón',
-            life: 3000
-          });
-        }
-      });
-    }
-    console.log(this.cupon);
-    this.cupon = this.nuevoCupon();
+ saveCupon() {
+  this.submitted = true;
+  
+  // Ejecutar validaciones
+  if (!this.validarCupon()) {
+    return;
   }
+
+  // Formatear fechas si son objetos Date
+  if (this.isDate(this.cupon.fecha_inicio)) {
+    this.cupon.fecha_inicio = this.formatDate(this.cupon.fecha_inicio as Date);
+  }
+  if (this.isDate(this.cupon.fecha_fin)) {
+    this.cupon.fecha_fin = this.formatDate(this.cupon.fecha_fin as Date);
+  }
+
+  // Lógica de guardado/actualización
+  if (this.cupon.cveCupon) {
+    // Actualizar cupón existente
+    this.cuponService.actualizarCupon(this.cupon.cveCupon, this.cupon).subscribe({
+      next: () => {
+        this.loadCupones();
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Completado',
+          detail: 'Cupón actualizado correctamente',
+          life: 3000
+        });
+        this.cuponDialog = false;
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudo actualizar el cupón',
+          life: 3000
+        });
+      }
+    });
+  } else {
+    // Crear nuevo cupón
+    this.cuponService.crearCupon(this.idCurso, this.cupon).subscribe({
+      next: () => {
+        this.loadCupones();
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Completado',
+          detail: 'Cupón creado correctamente',
+          life: 3000
+        });
+        this.cuponDialog = false;
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudo crear el cupón',
+          life: 3000
+        });
+      }
+    });
+  }
+  
+  console.log('Cupón guardado:', this.cupon);
+  this.cupon = this.nuevoCupon();
+}
+
 
   formatDate(date: Date): string {
     return date.toISOString().slice(0, 10); // yyyy-MM-dd
@@ -263,4 +273,79 @@ export class CuponesComponent implements OnInit {
   onGlobalFilter(table: Table, event: Event) {
     table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
   }
+
+  // Método que se ejecuta cuando cambia el descuento porcentual
+onPorcentajeChange(event: any): void {
+  const value = event.value || 0;
+  
+  if (value > 0) {
+    // Si hay descuento porcentual, limpiar el descuento fijo
+    this.cupon.descuento_fijo = 0;
+  }
+}
+
+// Método que se ejecuta cuando cambia el descuento fijo
+onDescuentoFijoChange(event: any): void {
+  const value = event.value || 0;
+  
+  if (value > 0) {
+    // Si hay descuento fijo, limpiar el descuento porcentual
+    this.cupon.descuento_porcentaje = 0;
+  }
+}
+
+// Método de validación mejorado
+private validarCupon(): boolean {
+  // Validar código obligatorio
+  if (!this.cupon.codigo?.trim()) {
+    this.messageService.add({
+      severity: 'warn',
+      summary: 'Advertencia',
+      detail: 'El código del cupón es obligatorio'
+    });
+    return false;
+  }
+
+  // Validar que al menos uno de los descuentos esté configurado
+  if (!this.cupon.descuento_porcentaje && !this.cupon.descuento_fijo) {
+    this.messageService.add({
+      severity: 'warn',
+      summary: 'Advertencia',
+      detail: 'Debe configurar al menos un tipo de descuento (porcentual o fijo)'
+    });
+    return false;
+  }
+
+  // Validar rangos del descuento porcentual
+  if (this.cupon.descuento_porcentaje && (this.cupon.descuento_porcentaje < 0 || this.cupon.descuento_porcentaje > 100)) {
+    this.messageService.add({
+      severity: 'warn',
+      summary: 'Advertencia',
+      detail: 'El descuento porcentual debe estar entre 0% y 100%'
+    });
+    return false;
+  }
+
+  // Validar que el descuento fijo no sea negativo
+  if (this.cupon.descuento_fijo && this.cupon.descuento_fijo < 0) {
+    this.messageService.add({
+      severity: 'warn',
+      summary: 'Advertencia',
+      detail: 'El descuento fijo no puede ser negativo'
+    });
+    return false;
+  }
+
+  // Validar usos disponibles
+  if (this.cupon.usos_disponibles < 0) {
+    this.messageService.add({
+      severity: 'warn',
+      summary: 'Advertencia',
+      detail: 'Los usos disponibles no pueden ser negativos'
+    });
+    return false;
+  }
+
+  return true;
+}
 }

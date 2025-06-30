@@ -13,6 +13,10 @@ import { ClaseEnVivoComponent } from './app/components/clase-en-vivo/clase-en-vi
 import { CuponesComponent } from './app/components/cupones/cupones.component';
 import { VideoLlamadaComponent } from './app/components/video-llamada/video-llamada.component';
 import { appLanding } from './app/landing/landingMain';
+import { ConfiguracionCertificadosComponent } from './app/components/configuracion-certificados/configuracion-certificados.component';
+import { CalendarioClasesComponent } from './app/components/calendario-clases/calendario-clases.component';
+import { RegisterComponent } from './app/auth/register/register.component';
+import { PerfilComponent } from './app/components/perfil/perfil.component';
 
 export const appRoutes: Routes = [
     {
@@ -23,15 +27,23 @@ export const appRoutes: Routes = [
         path: 'auth',
         component: AuthComponent,
     },
+    {
+        path: 'register',
+        component: RegisterComponent
+    },
 
     {
         path: 'start',
         component: AppLayout,
         children: [
+            { path: 'perfil', component: PerfilComponent},
             { path: 'dashboard', component: Dashboard },
             { path: 'cursos', component: CursosComponent },
             { path: 'invitaciones', component: InvitacionesComponent },
+            { path: 'configuracion-certificados', component: ConfiguracionCertificadosComponent },
             { path: 'videos/:idCurso', component: VideosComponent },
+            { path: 'calendario-clases', component: CalendarioClasesComponent},
+
 
         ]
     },

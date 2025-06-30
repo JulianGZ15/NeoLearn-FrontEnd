@@ -74,14 +74,43 @@
       <input pInputText id="codigo" [(ngModel)]="cupon.codigo" required />
       <small class="text-red-500" *ngIf="submitted && !cupon.codigo">El código es obligatorio.</small>
     </div>
+    
+    <!-- Campo de descuento porcentaje -->
     <div>
       <label for="descuento_porcentaje" class="block font-bold mb-2">% Descuento</label>
-      <p-inputnumber id="descuento_porcentaje" [(ngModel)]="cupon.descuento_porcentaje" mode="decimal" min="0" max="100"></p-inputnumber>
+      <p-inputnumber 
+        id="descuento_porcentaje" 
+        [(ngModel)]="cupon.descuento_porcentaje" 
+        mode="decimal" 
+        min="0" 
+        max="100"
+        [disabled]="cupon.descuento_fijo > 0"
+        (onInput)="onPorcentajeChange($event)"
+        placeholder="Ej: 15 (para 15% de descuento)">
+      </p-inputnumber>
+      <small class="text-gray-500" *ngIf="cupon.descuento_fijo > 0">
+        Campo deshabilitado - Ya hay un descuento fijo configurado
+      </small>
     </div>
+    
+    <!-- Campo de descuento fijo -->
     <div>
       <label for="descuento_fijo" class="block font-bold mb-2">Descuento Fijo</label>
-      <p-inputnumber id="descuento_fijo" [(ngModel)]="cupon.descuento_fijo" mode="currency" currency="MXN" locale="es-MX"></p-inputnumber>
+      <p-inputnumber 
+        id="descuento_fijo" 
+        [(ngModel)]="cupon.descuento_fijo" 
+        mode="currency" 
+        currency="MXN" 
+        locale="es-MX"
+        [disabled]="cupon.descuento_porcentaje > 0"
+        (onInput)="onDescuentoFijoChange($event)"
+        placeholder="Ej: $100.00">
+      </p-inputnumber>
+      <small class="text-gray-500" *ngIf="cupon.descuento_porcentaje > 0">
+        Campo deshabilitado - Ya hay un descuento porcentual configurado
+      </small>
     </div>
+    
     <div>
       <label for="fecha_inicio" class="block font-bold mb-2">Fecha de inicio</label>
       <p-calendar
@@ -93,6 +122,7 @@
         placeholder="Selecciona fecha de inicio"
       ></p-calendar>
     </div>
+    
     <div>
       <label for="fecha_fin" class="block font-bold mb-2">Fecha de fin</label>
       <p-calendar
@@ -104,11 +134,13 @@
         placeholder="Selecciona fecha de fin"
       ></p-calendar>
     </div>
+    
     <div>
       <label for="usos_disponibles" class="block font-bold mb-2">Usos disponibles</label>
       <p-inputnumber id="usos_disponibles" [(ngModel)]="cupon.usos_disponibles" mode="decimal" min="0"></p-inputnumber>
     </div>
   </div>
+  
   <ng-template pTemplate="footer">
     <p-button label="Cancelar" icon="pi pi-times" text (onClick)="hideDialog()" />
     <p-button label="Guardar" icon="pi pi-check" (onClick)="saveCupon()" />
@@ -116,5 +148,7 @@
 </p-dialog>
 
 
+
 <p-confirmdialog [style]="{ width: '450px' }"></p-confirmdialog>
 <p-toast></p-toast>
+

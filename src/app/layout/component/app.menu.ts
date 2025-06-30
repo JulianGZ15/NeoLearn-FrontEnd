@@ -58,7 +58,7 @@ export class AppMenu implements OnInit {
           items: [
             { label: 'Cursos', icon: 'pi pi-fw pi-graduation-cap', routerLink: ['/start/cursos'] },
             { label: 'Invitaciones', icon: 'pi pi-fw pi-inbox', routerLink: ['/start/invitaciones'] },
-            { label: 'Configuracion Certificados', icon: 'pi pi-fw pi-file-edit', routerLink: ['/start/invitaciones'] },
+            { label: 'Configuracion Certificados', icon: 'pi pi-fw pi-file-edit', routerLink: ['/start/configuracion-certificados'] },
 
 
 

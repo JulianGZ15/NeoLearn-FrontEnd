@@ -1,0 +1,525 @@
+<div class="registration-container">
+  <p-toast></p-toast>
+  
+  <div class="card">
+    <div class="text-center mb-4">
+      <h2 class="text-3xl font-bold text-gray-800 mb-2">Registro de Usuario</h2>
+      <p class="text-gray-600">Complete la información en los siguientes pasos</p>
+    </div>
+    
+    <p-stepper [value]="activeStep" class="basis-[50rem]">
+      
+      <!-- Lista de pasos -->
+      <p-step-list>
+        <p-step [value]="1">
+          <i class="pi pi-user mr-2"></i>Información Personal
+        </p-step>
+        <p-step [value]="2">
+          <i class="pi pi-lock mr-2"></i>Configurar Contraseña
+        </p-step>
+        <p-step [value]="3">
+          <i class="pi pi-building mr-2"></i>Información de Empresa
+        </p-step>
+        <p-step [value]="4">
+          <i class="pi pi-check-circle mr-2"></i>Confirmación
+        </p-step>
+      </p-step-list>
+
+      <!-- Paneles de contenido -->
+      <p-step-panels>
+        
+        <!-- Panel 1: Información Personal -->
+        <p-step-panel [value]="1">
+          <ng-template #content let-activateCallback="activateCallback">
+            <div class="flex flex-col min-h-96">
+              <div class="step-content flex-auto">
+                <div class="text-center mb-6">
+                  <i class="pi pi-user text-4xl text-blue-500 mb-3"></i>
+                  <h3 class="text-xl font-semibold text-gray-800">Información Personal</h3>
+                  <p class="text-gray-600">Ingresa tus datos personales</p>
+                </div>
+                
+                <form [formGroup]="userForm" class="form-grid">
+                  <div class="field">
+                    <label for="nombre">
+                      <i class="pi pi-user mr-2"></i>Nombre Completo *
+                    </label>
+                    <input 
+                      id="nombre" 
+                      type="text" 
+                      pInputText 
+                      formControlName="nombre"
+                      class="w-full"
+                      placeholder="Ingresa tu nombre completo"
+                      [class.ng-invalid]="userForm.get('nombre')?.invalid && userForm.get('nombre')?.touched"
+                    />
+                    <small 
+                      class="p-error" 
+                      *ngIf="userForm.get('nombre')?.invalid && userForm.get('nombre')?.touched"
+                    >
+                      <i class="pi pi-exclamation-triangle mr-1"></i>
+                      El nombre es requerido (mínimo 2 caracteres)
+                    </small>
+                  </div>
+
+                  <div class="field">
+                    <label for="correo">
+                      <i class="pi pi-envelope mr-2"></i>Correo Electrónico *
+                    </label>
+                    <input 
+                      id="correo" 
+                      type="email" 
+                      pInputText 
+                      formControlName="correo"
+                      class="w-full"
+                      placeholder="ejemplo@correo.com"
+                      [class.ng-invalid]="userForm.get('correo')?.invalid && userForm.get('correo')?.touched"
+                    />
+                    <small 
+                      class="p-error" 
+                      *ngIf="userForm.get('correo')?.invalid && userForm.get('correo')?.touched"
+                    >
+                      <i class="pi pi-exclamation-triangle mr-1"></i>
+                      Ingresa un correo válido
+                    </small>
+                  </div>
+
+                  <div class="field">
+                    <label for="telefono">
+                      <i class="pi pi-phone mr-2"></i>Teléfono *
+                    </label>
+                    <input 
+                      id="telefono" 
+                      type="tel" 
+                      pInputText 
+                      formControlName="telefono"
+                      class="w-full"
+                      placeholder="1234567890"
+                      [class.ng-invalid]="userForm.get('telefono')?.invalid && userForm.get('telefono')?.touched"
+                    />
+                    <small 
+                      class="p-error" 
+                      *ngIf="userForm.get('telefono')?.invalid && userForm.get('telefono')?.touched"
+                    >
+                      <i class="pi pi-exclamation-triangle mr-1"></i>
+                      Ingresa un teléfono válido (10 dígitos)
+                    </small>
+                  </div>
+
+                  <div class="field">
+                    <label for="tipo">
+                      <i class="pi pi-users mr-2"></i>Tipo de Usuario *
+                    </label>
+                    <p-dropdown 
+                      id="tipo"
+                      [options]="tipoUsuarioOptions" 
+                      formControlName="tipo"
+                      placeholder="Selecciona tipo de usuario"
+                      class="w-full"
+                      [class.ng-invalid]="userForm.get('tipo')?.invalid && userForm.get('tipo')?.touched"
+                    ></p-dropdown>
+                    <small 
+                      class="p-error" 
+                      *ngIf="userForm.get('tipo')?.invalid && userForm.get('tipo')?.touched"
+                    >
+                      <i class="pi pi-exclamation-triangle mr-1"></i>
+                      Selecciona un tipo de usuario
+                    </small>
+                  </div>
+
+                  <!-- Campo de dirección -->
+                  <div class="field address-field">
+                    <label for="direccion">
+                      <i class="pi pi-map-marker mr-2"></i>Dirección *
+                    </label>
+                    <div class="address-input-container">
+                      <input 
+                        id="direccion" 
+                        type="text" 
+                        pInputText 
+                        formControlName="direccionInput"
+                        placeholder="Escribe tu dirección..."
+                        class="w-full"
+                        (input)="onAddressInput($event)"
+                        autocomplete="off"
+                      />
+                      
+                      <div *ngIf="isLoadingAddresses" class="loading-indicator">
+                        <i class="pi pi-spin pi-spinner"></i>
+                      </div>
+                      
+                      <div *ngIf="showSuggestions" class="address-suggestions">
+                        <div 
+                          *ngFor="let suggestion of addressSuggestions" 
+                          class="suggestion-item"
+                          (click)="selectAddress(suggestion)"
+                        >
+                          <div class="suggestion-main">
+                            <i class="pi pi-map-marker mr-2 text-blue-500"></i>
+                            {{ suggestion.display_name }}
+                          </div>
+                          <div class="suggestion-details" *ngIf="suggestion.address">
+                            {{ suggestion.address.city }}, {{ suggestion.address.state }}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <small class="p-help">
+                      <i class="pi pi-info-circle mr-1"></i>
+                      Escribe al menos 3 caracteres para buscar direcciones
+                    </small>
+                    
+                    <div *ngIf="selectedAddressComponents" class="selected-address">
+                      <strong>
+                        <i class="pi pi-check-circle mr-2"></i>
+                        Dirección seleccionada:
+                      </strong>
+                      <p>{{ selectedAddressComponents.direccion_completa }}</p>
+                      <small>
+                        <i class="pi pi-compass mr-1"></i>
+                        Lat: {{ selectedAddressComponents.latitud }}, 
+                        Lng: {{ selectedAddressComponents.longitud }}
+                      </small>
+                    </div>
+                  </div>
+
+                  <div class="field">
+                    <label for="fotoperfil">
+                      <i class="pi pi-image mr-2"></i>Foto de Perfil
+                    </label>
+                    <p-fileUpload 
+                      mode="basic" 
+                      accept="image/*" 
+                      maxFileSize="1000000"
+                      (onSelect)="onFileSelect($event)"
+                      chooseLabel="Seleccionar Imagen"
+                      [auto]="true"
+                    ></p-fileUpload>
+                    <small class="p-help">
+                      <i class="pi pi-info-circle mr-1"></i>
+                      Tamaño máximo: 1MB. Formatos: JPG, PNG, GIF
+                    </small>
+                  </div>
+                </form>
+              </div>
+              
+              <!-- Botones de navegación -->
+              <div class="flex pt-6 justify-end">
+                <p-button 
+                  label="Siguiente" 
+                  icon="pi pi-arrow-right" 
+                  iconPos="right" 
+                  (onClick)="nextStep(activateCallback)"
+                  [disabled]="!userForm.valid || !selectedAddressComponents"
+                />
+              </div>
+            </div>
+          </ng-template>
+        </p-step-panel>
+
+        <!-- Panel 2: Configurar Contraseña -->
+        <p-step-panel [value]="2">
+          <ng-template #content let-activateCallback="activateCallback">
+            <div class="flex flex-col min-h-96">
+              <div class="step-content flex-auto">
+                <div class="text-center mb-6">
+                  <i class="pi pi-lock text-4xl text-blue-500 mb-3"></i>
+                  <h3 class="text-xl font-semibold text-gray-800">Configurar Contraseña</h3>
+                  <p class="text-gray-600">Crea una contraseña segura para tu cuenta</p>
+                </div>
+                
+                <form [formGroup]="passwordForm" class="form-grid max-w-md mx-auto">
+                  <div class="field">
+                    <label for="password">
+                      <i class="pi pi-lock mr-2"></i>Contraseña *
+                    </label>
+                    <p-password 
+                      id="password"
+                      formControlName="password"
+                      placeholder="Ingresa tu contraseña"
+                      [toggleMask]="true"
+                      [feedback]="true"
+                      class="w-full"
+                      [class.ng-invalid]="passwordForm.get('password')?.invalid && passwordForm.get('password')?.touched"
+                    ></p-password>
+                    <small 
+                      class="p-error" 
+                      *ngIf="passwordForm.get('password')?.invalid && passwordForm.get('password')?.touched"
+                    >
+                      <i class="pi pi-exclamation-triangle mr-1"></i>
+                      La contraseña debe tener al menos 8 caracteres
+                    </small>
+                  </div>
+
+                  <div class="field">
+                    <label for="confirmPassword">
+                      <i class="pi pi-lock mr-2"></i>Confirmar Contraseña *
+                    </label>
+                    <p-password 
+                      id="confirmPassword"
+                      formControlName="confirmPassword"
+                      placeholder="Confirma tu contraseña"
+                      [toggleMask]="true"
+                      [feedback]="false"
+                      class="w-full"
+                      [class.ng-invalid]="passwordForm.get('confirmPassword')?.invalid && passwordForm.get('confirmPassword')?.touched"
+                    ></p-password>
+                    <small 
+                      class="p-error" 
+                      *ngIf="passwordForm.get('confirmPassword')?.invalid && passwordForm.get('confirmPassword')?.touched"
+                    >
+                      <i class="pi pi-exclamation-triangle mr-1"></i>
+                      Las contraseñas no coinciden
+                    </small>
+                  </div>
+
+                  <!-- Indicadores de seguridad -->
+                  <div class="field">
+                    <div class="password-requirements">
+                      <h5 class="text-sm font-semibold mb-2">Requisitos de la contraseña:</h5>
+                      <ul class="text-xs space-y-1">
+                        <li [class]="getPasswordRequirementClass('length')">
+                          <i [class]="getPasswordRequirementIcon('length')"></i>
+                          Al menos 8 caracteres
+                        </li>
+                        <li [class]="getPasswordRequirementClass('uppercase')">
+                          <i [class]="getPasswordRequirementIcon('uppercase')"></i>
+                          Al menos una letra mayúscula
+                        </li>
+                        <li [class]="getPasswordRequirementClass('lowercase')">
+                          <i [class]="getPasswordRequirementIcon('lowercase')"></i>
+                          Al menos una letra minúscula
+                        </li>
+                        <li [class]="getPasswordRequirementClass('number')">
+                          <i [class]="getPasswordRequirementIcon('number')"></i>
+                          Al menos un número
+                        </li>
+                        <li [class]="getPasswordRequirementClass('special')">
+                          <i [class]="getPasswordRequirementIcon('special')"></i>
+                          Al menos un carácter especial
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </form>
+              </div>
+              
+              <!-- Botones de navegación -->
+              <div class="flex pt-6 justify-between">
+                <p-button 
+                  label="Anterior" 
+                  severity="secondary" 
+                  icon="pi pi-arrow-left" 
+                  (onClick)="activateCallback(1)" 
+                />
+                <p-button 
+                  label="Siguiente" 
+                  icon="pi pi-arrow-right" 
+                  iconPos="right" 
+                  (onClick)="nextStep(activateCallback)"
+                  [disabled]="!passwordForm.valid"
+                />
+              </div>
+            </div>
+          </ng-template>
+        </p-step-panel>
+
+        <!-- Panel 3: Información de Empresa -->
+        <p-step-panel [value]="3">
+          <ng-template #content let-activateCallback="activateCallback">
+            <div class="flex flex-col min-h-96">
+              <div class="step-content flex-auto">
+                <div class="text-center mb-6">
+                  <i class="pi pi-building text-4xl text-blue-500 mb-3"></i>
+                  <h3 class="text-xl font-semibold text-gray-800">Información de Empresa</h3>
+                  <p class="text-gray-600">Datos de tu empresa</p>
+                </div>
+                
+                <form [formGroup]="companyForm" class="form-grid">
+                  <div class="field">
+                    <label for="nombreEmpresa">
+                      <i class="pi pi-building mr-2"></i>Nombre de la Empresa *
+                    </label>
+                    <input 
+                      id="nombreEmpresa" 
+                      type="text" 
+                      pInputText 
+                      formControlName="nombre"
+                      class="w-full"
+                      placeholder="Nombre de tu empresa"
+                      [class.ng-invalid]="companyForm.get('nombre')?.invalid && companyForm.get('nombre')?.touched"
+                    />
+                    <small 
+                      class="p-error" 
+                      *ngIf="companyForm.get('nombre')?.invalid && companyForm.get('nombre')?.touched"
+                    >
+                      <i class="pi pi-exclamation-triangle mr-1"></i>
+                      El nombre de la empresa es requerido
+                    </small>
+                  </div>
+
+                  <div class="field">
+                    <label for="tipoPlan">
+                      <i class="pi pi-star mr-2"></i>Tipo de Plan
+                    </label>
+                    <input 
+                      id="tipoPlan" 
+                      type="text" 
+                      pInputText 
+                      value="Plan Gratuito (1 año)"
+                      class="w-full"
+                      readonly
+                    />
+                    <small class="p-help">
+                      <i class="pi pi-info-circle mr-1"></i>
+                      Comenzarás con un plan gratuito por 1 año
+                    </small>
+                  </div>
+                </form>
+              </div>
+              
+              <!-- Botones de navegación -->
+              <div class="flex pt-6 justify-between">
+                <p-button 
+                  label="Anterior" 
+                  severity="secondary" 
+                  icon="pi pi-arrow-left" 
+                  (onClick)="activateCallback(2)" 
+                />
+                <p-button 
+                  label="Siguiente" 
+                  icon="pi pi-arrow-right" 
+                  iconPos="right" 
+                  (onClick)="nextStep(activateCallback)"
+                  [disabled]="!companyForm.valid"
+                />
+              </div>
+            </div>
+          </ng-template>
+        </p-step-panel>
+
+        <!-- Panel 4: Confirmación -->
+        <p-step-panel [value]="4">
+          <ng-template #content let-activateCallback="activateCallback">
+            <div class="flex flex-col min-h-96">
+              <div class="step-content flex-auto">
+                <div class="text-center mb-6">
+                  <i class="pi pi-check-circle text-4xl text-green-500 mb-3"></i>
+                  <h3 class="text-xl font-semibold text-gray-800">Confirmación</h3>
+                  <p class="text-gray-600">Revisa tu información antes de registrarte</p>
+                </div>
+                
+                <div class="confirmation-details">
+                  <div class="confirmation-section">
+                    <h4>
+                      <i class="pi pi-user mr-2"></i>Datos Personales
+                    </h4>
+                    <div class="info-grid">
+                      <p><strong>Nombre:</strong> {{ userForm.get('nombre')?.value }}</p>
+                      <p><strong>Correo:</strong> {{ userForm.get('correo')?.value }}</p>
+                      <p><strong>Teléfono:</strong> {{ userForm.get('telefono')?.value }}</p>
+                      <p><strong>Tipo:</strong> {{ userForm.get('tipo')?.value }}</p>
+                      <p *ngIf="userForm.get('fotoperfil')?.value">
+                        <strong>Foto:</strong> {{ userForm.get('fotoperfil')?.value }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="confirmation-section">
+                    <h4>
+                      <i class="pi pi-lock mr-2"></i>Seguridad
+                    </h4>
+                    <div class="info-grid">
+                      <p><strong>Contraseña:</strong> <span class="text-green-600">Configurada ✓</span></p>
+                      <p><strong>Nivel de seguridad:</strong> 
+                        <span [class]="getPasswordStrengthClass()">
+                          {{ getPasswordStrengthText() }}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div class="confirmation-section">
+                    <h4>
+                      <i class="pi pi-building mr-2"></i>Empresa
+                    </h4>
+                    <div class="info-grid">
+                      <p><strong>Nombre:</strong> {{ companyForm.get('nombre')?.value }}</p>
+                      <p><strong>Plan:</strong> Gratuito (1 año)</p>
+                      <p><strong>Estado:</strong> <span class="text-green-600">Activo</span></p>
+                    </div>
+                  </div>
+                  
+                  <div class="confirmation-section">
+                    <h4>
+                      <i class="pi pi-map-marker mr-2"></i>Dirección
+                    </h4>
+                    <div *ngIf="selectedAddressComponents" class="info-grid">
+                      <p><strong>Dirección completa:</strong> {{ selectedAddressComponents.direccion_completa }}</p>
+                      <p *ngIf="selectedAddressComponents.calle">
+                        <strong>Calle:</strong> {{ selectedAddressComponents.calle }}
+                      </p>
+                      <p *ngIf="selectedAddressComponents.colonia">
+                        <strong>Colonia:</strong> {{ selectedAddressComponents.colonia }}
+                      </p>
+                      <p *ngIf="selectedAddressComponents.ciudad">
+                        <strong>Ciudad:</strong> {{ selectedAddressComponents.ciudad }}
+                      </p>
+                      <p *ngIf="selectedAddressComponents.estado">
+                        <strong>Estado:</strong> {{ selectedAddressComponents.estado }}
+                      </p>
+                      <p *ngIf="selectedAddressComponents.codigo_postal">
+                        <strong>Código Postal:</strong> {{ selectedAddressComponents.codigo_postal }}
+                      </p>
+                      <p class="coordinates">
+                        <strong>Coordenadas:</strong> 
+                        {{ selectedAddressComponents.latitud }}, {{ selectedAddressComponents.longitud }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Términos y condiciones -->
+                <div class="terms-section mt-6">
+                  <p-divider></p-divider>
+                  <div class="flex align-items-center">
+                    <p-checkbox 
+                      [(ngModel)]="acceptTerms" 
+                      [binary]="true" 
+                      inputId="terms"
+                    ></p-checkbox>
+                    <label for="terms" class="ml-2 text-sm">
+                      Acepto los <a href="#" class="text-blue-500 hover:underline">términos y condiciones</a> 
+                      y la <a href="#" class="text-blue-500 hover:underline">política de privacidad</a>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Botones de navegación -->
+              <div class="flex pt-6 justify-between">
+                <p-button 
+                  label="Anterior" 
+                  severity="secondary" 
+                  icon="pi pi-arrow-left" 
+                  (onClick)="activateCallback(3)" 
+                />
+                <p-button 
+                  label="Registrar Usuario" 
+                  icon="pi pi-check" 
+                  iconPos="right"
+                  severity="success"
+                  (onClick)="submitRegistration()"
+                  [loading]="isSubmitting"
+                  [disabled]="!acceptTerms"
+                />
+              </div>
+            </div>
+          </ng-template>
+        </p-step-panel>
+        
+      </p-step-panels>
+    </p-stepper>
+  </div>
+</div>
