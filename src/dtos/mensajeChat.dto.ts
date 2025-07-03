@@ -1,7 +1,14 @@
 export interface MensajeChatDTO {
-  cve_mensajeChat?: number;
-  claseEnVivoId?: number;
-  usuarioId?: number;
-  contenido?: string;
-  timestamp?: string; // ISO date-time string
+  cveMensajeChat?: number;
+  claseEnVivoId: number;
+  codigoSala: string;
+  usuarioId: number;
+  usuarioNombre: string;
+  usuarioAvatar?: string;
+  contenido: string;
+  timestamp: string;
+  tipoMensaje: 'TEXTO' | 'SISTEMA' | 'ARCHIVO' | 'EMOJI';
+  editado: boolean;
+  fechaEdicion?: string;
+  esMio: boolean;
 }

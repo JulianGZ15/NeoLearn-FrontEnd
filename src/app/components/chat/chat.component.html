@@ -1,0 +1,185 @@
+<!-- chat.component.html -->
+<div class="chat-container" [class.hidden]="!mostrarChat">
+  
+  <!-- Header del chat -->
+  <div class="chat-header">
+    <div class="flex justify-content-between align-items-center p-3">
+      <div class="flex align-items-center">
+        <i class="pi pi-comments mr-2 text-xl"></i>
+        <h4 class="m-0">Chat de la Clase</h4>
+      </div>
+      
+      <div class="flex align-items-center gap-2">
+        <!-- Estado de conexión -->
+        <i [class]="connectionStatusIcon + ' ' + connectionStatusClass"></i>
+        
+        <!-- Botón limpiar chat (solo instructor) -->
+        <p-button 
+          *ngIf="esInstructor"
+          icon="pi pi-trash"
+          severity="danger"
+          [outlined]="true"
+          size="small"
+          (onClick)="limpiarChat()"
+          pTooltip="Limpiar chat">
+        </p-button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Área de mensajes -->
+  <div class="chat-messages" #messagesContainer>
+    
+    <!-- Botón cargar más mensajes -->
+    <div *ngIf="hayMasPaginas" class="text-center p-2">
+      <p-button 
+        label="Cargar mensajes anteriores"
+        icon="pi pi-chevron-up"
+        severity="secondary"
+        [outlined]="true"
+        size="small"
+        [loading]="cargandoHistorial"
+        (onClick)="cargarMasMensajes()">
+      </p-button>
+    </div>
+
+    <!-- Loading inicial -->
+    <div *ngIf="loading" class="text-center p-4">
+      <p-progressSpinner size="small"></p-progressSpinner>
+      <p class="mt-2 text-color-secondary">Cargando chat...</p>
+    </div>
+
+    <!-- Mensajes -->
+    <div *ngFor="let mensaje of mensajes; trackBy: trackByMensaje" 
+         class="message-item"
+         [class.my-message]="mensaje.esMio"
+         [class.system-message]="mensaje.tipoMensaje === 'SISTEMA'">
+      
+      <!-- Mensaje del sistema -->
+      <div *ngIf="mensaje.tipoMensaje === 'SISTEMA'" class="system-message-content">
+        <i class="pi pi-info-circle mr-2"></i>
+        <span>{{ mensaje.contenido }}</span>
+        <small class="ml-2 text-color-secondary">{{ formatearFecha(mensaje.timestamp) }}</small>
+      </div>
+
+      <!-- Mensaje normal -->
+      <div *ngIf="mensaje.tipoMensaje !== 'SISTEMA'" class="message-content">
+        
+        <!-- Avatar y nombre (solo para mensajes de otros) -->
+        <div *ngIf="!mensaje.esMio" class="message-header">
+          <p-avatar 
+            [label]="getInitials(mensaje.usuarioNombre)"
+            [image]="mensaje.usuarioAvatar"
+            size="normal"
+            styleClass="mr-2">
+          </p-avatar>
+          <span class="font-medium text-sm">{{ mensaje.usuarioNombre }}</span>
+        </div>
+
+        <!-- Contenido del mensaje -->
+        <div class="message-bubble" 
+             [class.my-bubble]="mensaje.esMio"
+             [class.other-bubble]="!mensaje.esMio">
+          
+          <div class="message-text">{{ mensaje.contenido }}</div>
+          
+          <!-- Metadata del mensaje -->
+          <div class="message-meta">
+            <small class="timestamp">{{ formatearFecha(mensaje.timestamp) }}</small>
+            <span *ngIf="mensaje.editado" class="edited-indicator ml-1">(editado)</span>
+          </div>
+
+          <!-- Acciones del mensaje -->
+          <div *ngIf="mensaje.esMio" class="message-actions">
+            <p-button 
+              icon="pi pi-pencil"
+              severity="secondary"
+              [text]="true"
+              size="small"
+              (onClick)="editarMensaje(mensaje)"
+              pTooltip="Editar">
+            </p-button>
+            <p-button 
+              icon="pi pi-trash"
+              severity="danger"
+              [text]="true"
+              size="small"
+              (onClick)="eliminarMensaje(mensaje)"
+              pTooltip="Eliminar">
+            </p-button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Indicador de usuarios escribiendo -->
+    <div *ngIf="usuariosEscribiendoTexto" class="typing-indicator">
+      <div class="typing-animation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <small class="ml-2">{{ usuariosEscribiendoTexto }}</small>
+    </div>
+
+    <!-- Estado vacío -->
+    <div *ngIf="mensajes.length === 0 && !loading" class="empty-chat">
+      <i class="pi pi-comments text-4xl text-color-secondary mb-3"></i>
+      <p class="text-color-secondary">No hay mensajes aún</p>
+      <p class="text-color-secondary text-sm">¡Sé el primero en escribir!</p>
+    </div>
+  </div>
+
+  <!-- Input de mensaje -->
+  <div class="chat-input" *ngIf="puedeEnviarMensajes">
+    
+    <!-- Indicador de edición -->
+    <div *ngIf="mensajeEditando" class="editing-indicator">
+      <i class="pi pi-pencil mr-2"></i>
+      <span>Editando mensaje</span>
+      <p-button 
+        icon="pi pi-times"
+        severity="secondary"
+        [text]="true"
+        size="small"
+        (onClick)="cancelarEdicion()"
+        class="ml-auto">
+      </p-button>
+    </div>
+
+    <!-- Input principal -->
+    <div class="input-container">
+      <div class="p-inputgroup">
+        <textarea 
+          #messageInput
+          pInputTextarea
+          [(ngModel)]="nuevoMensaje"
+          (input)="onInputChange()"
+          (keydown)="onKeyPress($event)"
+          placeholder="Escribe un mensaje..."
+          [rows]="1"
+          [disabled]="connectionState !== 'connected'"
+          class="message-textarea">
+        </textarea>
+        
+        <p-button 
+          icon="pi pi-send"
+          [disabled]="!nuevoMensaje.trim() || connectionState !== 'connected'"
+          (onClick)="enviarMensaje()"
+          pTooltip="Enviar mensaje">
+        </p-button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mensaje de permisos -->
+  <div *ngIf="!puedeParticipar" class="no-permission">
+    <i class="pi pi-lock mr-2"></i>
+    <span>No tienes permisos para participar en este chat</span>
+  </div>
+
+  <div *ngIf="puedeParticipar && !puedeEnviarMensajes" class="no-permission">
+    <i class="pi pi-eye mr-2"></i>
+    <span>Solo puedes ver los mensajes</span>
+  </div>
+</div>

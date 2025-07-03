@@ -21,6 +21,8 @@ import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { Toolbar } from 'primeng/toolbar';
 import { Chip } from 'primeng/chip';
 import { CommonModule } from '@angular/common';
+import { ChatComponent } from "../chat/chat.component";
+import { LayoutService } from '../../layout/service/layout.service';
 
 
 interface Participante {
@@ -50,8 +52,8 @@ interface Participante {
     OverlayPanelModule,
     Toolbar,
     Chip,
-
-  ],
+    ChatComponent
+],
   templateUrl: './video-llamada.component.html',
   styleUrl: './video-llamada.component.scss'
 })
@@ -79,6 +81,10 @@ export class VideoLlamadaComponent implements OnInit, OnDestroy, AfterViewInit {
   showParticipants = true;
   showChat = false;
 
+    // Chat
+  mostrarChat = false;
+  esInstructor = false;
+
   // Configuración WebRTC
   private rtcConfiguration: RTCConfiguration = {
     iceServers: [
@@ -92,26 +98,25 @@ export class VideoLlamadaComponent implements OnInit, OnDestroy, AfterViewInit {
     private router: Router,
     private signalingService: SignalingService,
     private claseService: ClaseEnVivoService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private layoutService: LayoutService
   ) {}
 
-  async ngOnInit(): Promise<void> {
-    this.route.params.pipe(takeUntil(this.destroy$)).subscribe(async params => {
+ngOnInit(): void {
+  this.route.params
+    .pipe(takeUntil(this.destroy$))
+    .subscribe(async params => {
       this.claseId = +params['idClase'];
-      console.log('ID de clase recibido:', this.claseId);
-      
       await this.cargarClase();
-      await this.inicializarVideoCall();
+
+      this.layoutService.onMenuToggle(); // este sí puede quedar aquí
     });
-  }
+}
 
+ngAfterViewInit(): void {
+  this.inicializarVideoCall(); // ✅ ejecuta aquí donde ya está disponible el videoRef
+}
 
-  ngAfterViewInit(): void {
-    // Configurar video local después de que la vista esté lista
-    if (this.localStream && this.localVideoRef) {
-      this.localVideoRef.nativeElement.srcObject = this.localStream;
-    }
-  }
 
   ngOnDestroy(): void {
     this.desconectar();
@@ -609,6 +614,10 @@ getConnectionSeverity(participante: Participante): string {
   return severityMap[status as keyof typeof severityMap] || 'secondary';
 }
 
+ // Método para alternar chat
+  toggleChat(): void {
+    this.mostrarChat = !this.mostrarChat;
+  }
 
 
 }
