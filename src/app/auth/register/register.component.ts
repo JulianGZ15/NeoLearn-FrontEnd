@@ -3,8 +3,8 @@ import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/fo
 import { MessageService } from 'primeng/api';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { Subject, of } from 'rxjs';
-import { AddressComponents, NominatimResult, NominatimService } from '../../Services/nominatim.service';
-import { RegisterService } from '../../Services/register.service';
+import { AddressComponents, NominatimResult, NominatimService } from '../../Admin/Services/nominatim.service';
+import { RegisterService } from '../../Admin/Services/register.service';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { UsuarioDTO } from '../../../dtos/usuario.dto';
 import { EmpresaDTO } from '../../../dtos/empresa.dto';

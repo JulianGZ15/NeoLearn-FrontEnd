@@ -1,0 +1,150 @@
+.layout-container {
+  @apply min-h-screen bg-surface-50;
+  display: flex;
+  flex-direction: column;
+}
+
+.layout-content {
+  @apply flex flex-1;
+  padding-top: 64px; // Altura del header
+}
+
+.main-content {
+  @apply flex-1 transition-all duration-300 ease-in-out;
+  
+  &.content-collapsed {
+    margin-left: 280px;
+  }
+  
+  &.content-expanded {
+    margin-left: 0;
+  }
+}
+
+.content-wrapper {
+  @apply h-full;
+  min-height: calc(100vh - 64px);
+}
+
+.breadcrumb-container {
+  @apply bg-white border-b border-surface-200 px-6 py-4;
+  
+  :host ::ng-deep .custom-breadcrumb {
+    .p-breadcrumb {
+      @apply bg-transparent border-none p-0;
+      
+      .p-breadcrumb-list {
+        .p-menuitem-link {
+          @apply text-surface-600 hover:text-primary-600 transition-colors duration-200;
+          
+          &:focus {
+            @apply shadow-none;
+          }
+        }
+        
+        .p-menuitem-separator {
+          @apply text-surface-400;
+        }
+      }
+    }
+  }
+}
+
+.page-content {
+  @apply p-6;
+  min-height: calc(100vh - 64px - 60px); // Altura total - header - breadcrumb
+  
+  // Animación de entrada para el contenido
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.loading-overlay {
+  @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50;
+  backdrop-filter: blur(4px);
+  
+  .loading-content {
+    @apply bg-white rounded-lg p-8 text-center shadow-xl;
+    
+    .loading-text {
+      @apply mt-4 text-surface-600 font-medium;
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .main-content {
+    &.content-collapsed,
+    &.content-expanded {
+      margin-left: 0;
+    }
+  }
+  
+  .page-content {
+    @apply p-4;
+  }
+  
+  .breadcrumb-container {
+    @apply px-4 py-3;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-content {
+    @apply p-3;
+  }
+}
+
+// Animaciones
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Estilos personalizados para PrimeNG
+:host ::ng-deep .custom-spinner {
+  .p-progress-spinner-circle {
+    stroke: var(--primary-500);
+  }
+}
+
+// Mejoras de accesibilidad
+.layout-container {
+  &:focus-within {
+    .main-content {
+      outline: 2px solid var(--primary-500);
+      outline-offset: 2px;
+    }
+  }
+}
+
+// Transiciones suaves para el contenido
+.page-content > * {
+  transition: all 0.2s ease-out;
+}
+
+// Estilos para scroll personalizado
+.content-wrapper {
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: var(--surface-100);
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: var(--surface-300);
+    border-radius: 4px;
+    
+    &:hover {
+      background: var(--surface-400);
+    }
+  }
+}

@@ -9,21 +9,19 @@ import { Router, RouterModule } from '@angular/router';
   selector: 'app-header',
   standalone: true,
   imports: [CommonModule, ButtonModule, MenubarModule, RouterModule],
-    styleUrl: './../landing_styles.css',
+  styleUrl: './../landing_styles.css',
   encapsulation: ViewEncapsulation.None,
   template: `
     <header class="header">
       <div class="container">
         <nav class="navbar">
           <div class="logo">
-            <h2 class="text-gradient">NeoLearn</h2>
+<img src="assets/images/logo.webp" alt="" width="90" height="60">
           </div>
-          
+
           <div class="nav-menu desktop-menu">
             <a href="#inicio" class="nav-link">Inicio</a>
             <a href="#caracteristicas" class="nav-link">Características</a>
-            <a href="#empresas" class="nav-link">Para Empresas</a>
-            <a href="#estudiantes" class="nav-link">Para Estudiantes</a>
           </div>
           
           <div class="nav-actions">
@@ -60,7 +58,6 @@ import { Router, RouterModule } from '@angular/router';
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 1rem 0;
     }
     
     .logo h2 {
@@ -126,4 +123,7 @@ import { Router, RouterModule } from '@angular/router';
     }
   `]
 })
-export class HeaderComponent {}
+export class HeaderComponent {
+  logoPath = './assets/images/logo.webp';
+
+ }

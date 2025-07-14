@@ -1,0 +1,163 @@
+<div class="videos-container">
+  <!-- Header -->
+  <div class="videos-header">
+    <h2 class="videos-title">
+      <i class="pi pi-play-circle mr-2"></i>
+      Videos del Curso
+    </h2>
+    <p class="videos-subtitle">{{videos.length}} videos disponibles</p>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <p-progressSpinner 
+      strokeWidth="4" 
+      animationDuration="1s"
+      styleClass="custom-spinner">
+    </p-progressSpinner>
+    <p class="loading-text">Cargando videos...</p>
+  </div>
+
+  <!-- Videos List -->
+  <div *ngIf="!loading && videos.length > 0" class="videos-content">
+    <div class="videos-grid">
+      <div 
+        *ngFor="let video of videos; let i = index" 
+        class="video-card"
+        [class.video-selected]="selectedVideo?.cveVideo === video.cveVideo"
+        (click)="seleccionarVideo(video)">
+        
+        <p-card styleClass="video-card-content">
+          <!-- Video Thumbnail -->
+          <div class="video-thumbnail">
+            <img 
+              [src]="obtenerPortadaUrl(video.portada || '')" 
+              [alt]="video.titulo"
+              class="thumbnail-image"
+              onerror="this.src='assets/images/default-thumbnail.png'">
+            
+            <!-- Play Overlay -->
+            <!-- <div class="play-overlay">
+              <i [class]="obtenerIconoEstado(video.completado)" 
+                 [ngClass]="obtenerClaseEstado(video.completado)">
+              </i>
+            </div> -->
+            
+            <!-- Duration Badge -->
+            <div class="duration-badge" *ngIf="video.duracion_minutos">
+              {{formatearDuracion(video.duracion_minutos)}}
+            </div>
+            
+            <!-- Status Badge -->
+            <div class="status-badge" 
+                 [class.completed]="video.completado"
+                 [class.pending]="!video.completado">
+              <i class="pi" 
+                 [class.pi-check]="video.completado"
+                 [class.pi-clock]="!video.completado">
+              </i>
+            </div>
+          </div>
+
+          <!-- Video Info -->
+          <div class="video-info">
+            <h3 class="video-title">{{video.titulo}}</h3>
+            <p class="video-description" *ngIf="video.descripcion">
+              {{video.descripcion}}
+            </p>
+            
+            <div class="video-meta">
+              <span class="video-order">
+                <i class="pi pi-list mr-1"></i>
+                Video {{i + 1}}
+              </span>
+              <span class="video-duration" *ngIf="video.duracion_minutos">
+                <i class="pi pi-clock mr-1"></i>
+                {{formatearDuracion(video.duracion_minutos)}}
+              </span>
+            </div>
+            
+            <!-- Progress Bar (si tienes progreso) -->
+            <div class="video-progress" *ngIf="video.progreso !== undefined">
+              <div class="progress-info">
+                <span class="progress-label">Progreso</span>
+                <span class="progress-percentage">{{video.progreso}}%</span>
+              </div>
+              <p-progressBar 
+                [value]="video.progreso"
+                [showValue]="false"
+                styleClass="custom-progress">
+              </p-progressBar>
+            </div>
+          </div>
+
+          <!-- Action Button -->
+          <div class="video-actions">
+            <p-button 
+              [label]="video.completado ? 'Ver de nuevo' : 'Reproducir'"
+              [icon]="video.completado ? 'pi pi-refresh' : 'pi pi-play'"
+              [outlined]="video.completado"
+              size="small"
+              class="w-full"
+              (onClick)="seleccionarVideo(video)">
+            </p-button>
+          </div>
+        </p-card>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && videos.length === 0" class="empty-state">
+    <div class="empty-content">
+      <i class="pi pi-video empty-icon"></i>
+      <h3 class="empty-title">No hay videos disponibles</h3>
+      <p class="empty-message">
+        Este curso aún no tiene videos publicados. 
+        Vuelve más tarde para ver el contenido.
+      </p>
+    </div>
+  </div>
+
+  <!-- Selected Video Player (Modal) -->
+  <p-dialog 
+    [(visible)]="showDialog"
+    [modal]="true"
+    [closable]="true"
+    [draggable]="false"
+    [resizable]="false"
+    styleClass="video-player-dialog"
+    [style]="{width: '90vw', maxWidth: '1200px'}"
+    (onHide)="selectedVideo = null; showDialog = false">
+    
+    <ng-template #header>
+      <div class="dialog-header">
+        <h3>{{selectedVideo?.titulo}}</h3>
+        <p-tag 
+          [value]="selectedVideo?.completado ? 'Completado' : 'En progreso'"
+          [severity]="selectedVideo?.completado ? 'success' : 'info'">
+        </p-tag>
+      </div>
+    </ng-template>
+
+    <div class="video-player-content" *ngIf="selectedVideo">
+      <!-- Aquí iría tu reproductor de video -->
+      <div class="video-player-placeholder">
+        <i class="pi pi-play-circle placeholder-icon"></i>
+        <p>Reproductor de video para: {{selectedVideo.titulo}}</p>
+        <p class="text-sm text-muted-color">
+          Aquí se integraría el reproductor de video real
+        </p>
+      </div>
+      
+      <!-- Video Description -->
+      <div class="video-details" *ngIf="selectedVideo.descripcion">
+        <h4>Descripción</h4>
+        <p>{{selectedVideo.descripcion}}</p>
+      </div>
+    </div>
+  </p-dialog>
+
+  <!-- Toast Messages -->
+  <p-toast position="top-right"></p-toast>
+</div>

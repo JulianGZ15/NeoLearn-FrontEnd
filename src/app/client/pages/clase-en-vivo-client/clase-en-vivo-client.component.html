@@ -1,0 +1,152 @@
+<div class="clases-container">
+    <!-- Header -->
+    <!-- En clases-en-vivo-client.component.html -->
+    <div class="clases-header">
+        <div class="header-content">
+            <div class="header-info">
+                <h2 class="clases-title">
+                    <i class="pi pi-video mr-2"></i>
+                    {{cursoId ? 'Clases del Curso' : 'Clases en Vivo'}}
+                </h2>
+                <p class="clases-subtitle">
+                    {{cursoId ? 'Todas las clases programadas para este curso' : 'Únete a las clases programadas de tus cursos'}}
+                </p>
+            </div>
+
+            <div class="header-actions">
+                <p-button icon="pi pi-refresh" [text]="true" [rounded]="true" (onClick)="refrescarClases()"
+                    pTooltip="Actualizar lista">
+                </p-button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Filtros -->
+    <div class="filtros-container">
+        <p-card styleClass="filtros-card">
+            <div class="filtros-content">
+                <div class="filtro-grupo">
+                    <label class="filtro-label">Estado:</label>
+                    <p-dropdown [(ngModel)]="filtroEstado" [options]="opcionesEstado" optionLabel="label"
+                        optionValue="value" (onChange)="agruparClases()" styleClass="filtro-dropdown">
+                    </p-dropdown>
+                </div>
+
+                <div class="filtro-grupo">
+                    <label class="filtro-label">Fecha:</label>
+                    <p-dropdown [(ngModel)]="filtroFecha" [options]="opcionesFecha" optionLabel="label"
+                        optionValue="value" (onChange)="agruparClases()" styleClass="filtro-dropdown">
+                    </p-dropdown>
+                </div>
+
+                <div class="filtro-stats">
+                    <p-chip [label]="clasesFiltradas.length + ' clases'" styleClass="stats-chip">
+                    </p-chip>
+                </div>
+            </div>
+        </p-card>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-container">
+        <p-progressSpinner strokeWidth="4" animationDuration="1s" styleClass="custom-spinner">
+        </p-progressSpinner>
+        <p class="loading-text">Cargando clases...</p>
+    </div>
+
+    <!-- Clases Content -->
+    <div *ngIf="!loading" class="clases-content">
+        <!-- Empty State -->
+        <div *ngIf="clasesFiltradas.length === 0" class="empty-state">
+            <div class="empty-content">
+                <i class="pi pi-video empty-icon"></i>
+                <h3 class="empty-title">No hay clases programadas</h3>
+                <p class="empty-message">
+                    No tienes clases en vivo programadas en este momento.
+                    Revisa tus cursos para ver si hay nuevas clases disponibles.
+                </p>
+            </div>
+        </div>
+
+        <!-- Clases Agrupadas -->
+        <div *ngIf="clasesFiltradas.length > 0" class="clases-agrupadas">
+            <div *ngFor="let grupo of clasesAgrupadasKeys" class="grupo-clases">
+                <div *ngIf="clasesAgrupadas[grupo].length > 0" class="grupo-container">
+                    <h3 class="grupo-titulo">
+                        {{grupo}}
+                        <p-badge [value]="clasesAgrupadas[grupo].length.toString()" styleClass="grupo-badge">
+                        </p-badge>
+                    </h3>
+
+                    <div class="clases-grid">
+                        <div *ngFor="let clase of clasesAgrupadas[grupo]" class="clase-card">
+                            <p-card styleClass="clase-card-content">
+                                <!-- Clase Header -->
+                                <div class="clase-header">
+                                    <div class="clase-info">
+                                        <h4 class="clase-titulo">{{clase.titulo}}</h4>
+                                        <p class="clase-curso" *ngIf="clase.cursoNombre">
+                                            <i class="pi pi-book mr-1"></i>
+                                            {{clase.cursoNombre}}
+                                        </p>
+                                    </div>
+
+                                    <p-tag [value]="clase.tiempoRestante"
+                                        [severity]="obtenerSeveridadEstado(clase.estadoVisual)"
+                                        [icon]="obtenerIconoEstado(clase.estadoVisual)" styleClass="estado-tag">
+                                    </p-tag>
+                                </div>
+
+                                <!-- Clase Details -->
+                                <div class="clase-details">
+                                    <div class="detalle-item">
+                                        <i class="pi pi-calendar detalle-icon"></i>
+                                        <span>{{formatearFecha(clase.fechaProgramada)}}</span>
+                                    </div>
+
+                                    <div class="detalle-item">
+                                        <i class="pi pi-clock detalle-icon"></i>
+                                        <span>{{formatearHora(clase.fechaProgramada)}}</span>
+                                    </div>
+
+                                    <div class="detalle-item" *ngIf="clase.duracionEstimadaMinutos">
+                                        <i class="pi pi-stopwatch detalle-icon"></i>
+                                        <span>{{obtenerDuracionFormateada(clase)}}</span>
+                                    </div>
+
+                                    <div class="detalle-item" *ngIf="clase.instructorNombre">
+                                        <i class="pi pi-user detalle-icon"></i>
+                                        <span>{{clase.instructorNombre}}</span>
+                                    </div>
+                                </div>
+
+                                <!-- Clase Description -->
+                                <div class="clase-descripcion" *ngIf="clase.descripcion">
+                                    <p>{{clase.descripcion}}</p>
+                                </div>
+
+                                <!-- Clase Actions -->
+                                <div class="clase-actions">
+                                    <p-button [label]="obtenerEtiquetaBoton(clase)" [icon]="obtenerIconoBoton(clase)"
+                                        [disabled]="!clase.puedeUnirse"
+                                        [severity]="clase.estadoVisual === EstadoClase.EN_VIVO ? 'success' : 'primary'"
+                                        size="small" class="unirse-btn" (onClick)="unirseAClase(clase)">
+                                    </p-button>
+
+                                   
+                                </div>
+
+                                <!-- Indicador En Vivo -->
+
+                            </p-card>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Messages -->
+    <p-toast position="top-right"></p-toast>
+</div>

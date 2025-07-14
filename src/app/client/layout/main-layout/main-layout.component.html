@@ -1,0 +1,48 @@
+<div class="layout-container">
+  <!-- Header -->
+  <app-header-client (sidebarToggle)="toggleSidebar()"></app-header-client>
+  
+  <!-- Main Content Area -->
+  <div class="layout-content">
+    <!-- Sidebar -->
+    <app-sidebar-client
+      [isVisible]="sidebarVisible" 
+      (toggleSidebar)="toggleSidebar()">
+    </app-sidebar-client>
+    
+    <!-- Content -->
+    <main class="main-content" 
+          [class.content-expanded]="!sidebarVisible"
+          [class.content-collapsed]="sidebarVisible">
+      
+      <!-- Content Wrapper -->
+      <div class="content-wrapper">
+        <!-- Breadcrumb -->
+        <div class="breadcrumb-container" *ngIf="showBreadcrumb">
+          <p-breadcrumb 
+            [model]="breadcrumbItems" 
+            [home]="breadcrumbHome"
+            styleClass="custom-breadcrumb">
+          </p-breadcrumb>
+        </div>
+        
+        <!-- Page Content -->
+        <div class="page-content">
+          <router-outlet></router-outlet>
+        </div>
+      </div>
+    </main>
+  </div>
+  
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" *ngIf="isLoading">
+    <div class="loading-content">
+      <p-progressSpinner 
+        strokeWidth="4" 
+        animationDuration="1s"
+        styleClass="custom-spinner">
+      </p-progressSpinner>
+      <p class="loading-text">Cargando...</p>
+    </div>
+  </div>
+</div>

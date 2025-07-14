@@ -1,0 +1,201 @@
+<div class="container mx-auto px-4 py-6">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="text-center py-12">
+    <p-progressSpinner></p-progressSpinner>
+    <p class="mt-4 text-muted-color">Cargando detalles del curso...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="text-center py-12">
+    <i class="pi pi-exclamation-triangle text-6xl text-red-500 mb-4"></i>
+    <h2 class="text-2xl font-bold mb-2">Error al cargar el curso</h2>
+    <p class="text-muted-color mb-6">No se pudo encontrar el curso solicitado</p>
+    <p-button 
+      label="Volver al Dashboard" 
+      icon="pi pi-arrow-left"
+      (onClick)="volver()">
+    </p-button>
+  </div>
+
+  <!-- Course Details -->
+  <div *ngIf="curso && !loading && !error" class="max-w-6xl mx-auto">
+    <!-- Header with Back Button -->
+    <div class="mb-6">
+      <p-button 
+        label="Volver" 
+        icon="pi pi-arrow-left"
+        [text]="true"
+        (onClick)="volver()"
+        class="mb-4">
+      </p-button>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Course Image and Purchase Section -->
+      <div class="lg:col-span-1">
+        <p-card>
+          <div class="text-center">
+            <img 
+              [src]="portadaUrl" 
+              [alt]="curso.titulo"
+              class="w-full h-64 object-cover rounded-lg mb-4">
+            
+            <div class="mb-4">
+              <div class="text-3xl font-bold text-primary mb-2">
+                {{ formatearPrecio(curso.precio) }}
+              </div>
+              <p-tag 
+                *ngIf="curso.es_gratis" 
+                value="GRATIS" 
+                severity="success"
+                class="mb-4">
+              </p-tag>
+            </div>
+
+            <p-button 
+              *ngIf="!curso.es_gratis"
+              label="Comprar Curso"
+              icon="pi pi-shopping-cart"
+              [loading]="comprando"
+              (onClick)="comprarCurso()"
+              class="w-full mb-3">
+            </p-button>
+
+            <p-button 
+              *ngIf="curso.es_gratis"
+              label="Inscribirse Gratis"
+              icon="pi pi-user-plus"
+              [loading]="comprando"
+              (onClick)="inscribirseCurso()"
+              class="w-full mb-3">
+            </p-button>
+
+            <p-button 
+              label="Vista Previa"
+              icon="pi pi-eye"
+              [outlined]="true"
+              class="w-full">
+            </p-button>
+          </div>
+        </p-card>
+
+        <!-- Course Stats -->
+        <p-card class="mt-6">
+          <ng-template #header>
+            <h3 class="text-lg font-semibold">Información del Curso</h3>
+          </ng-template>
+
+          <div class="space-y-4">
+            <div class="flex justify-between items-center">
+              <span class="text-muted-color">Estado:</span>
+              <p-tag 
+                [value]="curso.estado" 
+                [severity]="getSeverityByEstado(curso.estado)">
+              </p-tag>
+            </div>
+
+            <div class="flex justify-between items-center">
+              <span class="text-muted-color">Fecha de Publicación:</span>
+              <span class="font-medium">{{ formatearFecha(curso.fecha_publicacion) }}</span>
+            </div>
+
+            <div class="flex justify-between items-center">
+              <span class="text-muted-color">Público Objetivo:</span>
+              <span class="font-medium">{{ curso.publico_objetivo || 'General' }}</span>
+            </div>
+
+          </div>
+        </p-card>
+      </div>
+
+      <!-- Course Information -->
+      <div class="lg:col-span-2">
+        <div class="space-y-6">
+          <!-- Title and Description -->
+          <div>
+            <h1 class="text-4xl font-bold mb-4">{{ curso.titulo }}</h1>
+            <p class="text-lg text-muted-color leading-relaxed">
+              {{ curso.descripcion }}
+            </p>
+          </div>
+
+          <!-- Course Content Preview -->
+          <p-card>
+            <ng-template #header>
+              <h2 class="text-2xl font-semibold">Contenido del Curso</h2>
+            </ng-template>
+
+            <div class="space-y-4">
+              <p class="text-muted-color">
+                Este curso está diseñado para {{ curso.publico_objetivo || 'estudiantes de todos los niveles' }}.
+              </p>
+
+              <!-- Placeholder for course modules/lessons -->
+              <div class="border-l-4 border-primary pl-4">
+                <h3 class="font-semibold mb-2">Lo que aprenderás:</h3>
+                <ul class="space-y-2 text-muted-color">
+                  <li class="flex items-start">
+                    <i class="pi pi-check text-green-500 mr-2 mt-1"></i>
+                    Conceptos fundamentales y teoría esencial
+                  </li>
+                  <li class="flex items-start">
+                    <i class="pi pi-check text-green-500 mr-2 mt-1"></i>
+                    Ejercicios prácticos y casos de estudio
+                  </li>
+                  <li class="flex items-start">
+                    <i class="pi pi-check text-green-500 mr-2 mt-1"></i>
+                    Herramientas y recursos adicionales
+                  </li>
+                  <li class="flex items-start">
+                    <i class="pi pi-check text-green-500 mr-2 mt-1"></i>
+                    Certificado de finalización
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </p-card>
+
+          <!-- Requirements -->
+          <p-card>
+            <ng-template #header>
+              <h2 class="text-2xl font-semibold">Requisitos</h2>
+            </ng-template>
+
+            <ul class="space-y-2 text-muted-color">
+              <li class="flex items-start">
+                <i class="pi pi-circle-fill text-xs mr-3 mt-2"></i>
+                No se requiere experiencia previa
+              </li>
+              <li class="flex items-start">
+                <i class="pi pi-circle-fill text-xs mr-3 mt-2"></i>
+                Acceso a internet y dispositivo compatible
+              </li>
+              <li class="flex items-start">
+                <i class="pi pi-circle-fill text-xs mr-3 mt-2"></i>
+                Ganas de aprender y dedicación
+              </li>
+            </ul>
+          </p-card>
+
+          <!-- Instructor Info (placeholder) -->
+          <p-card>
+            <ng-template #header>
+              <h2 class="text-2xl font-semibold">Instructor</h2>
+            </ng-template>
+
+            <div class="flex items-center space-x-4">
+              <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
+                <i class="pi pi-user text-white text-2xl"></i>
+              </div>
+              <div>
+                <h3 class="font-semibold text-lg">Instructor Experto</h3>
+                <p class="text-muted-color">Especialista en el área</p>
+              </div>
+            </div>
+          </p-card>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -6,5 +6,7 @@ export interface VideoDTO {
   duracion_minutos?: number;
   orden?: number;
   portada?: string; // Nombre del archivo de la portada
-
+  completado : boolean ;
+  descripcion: string;
+  progreso:number;
 }

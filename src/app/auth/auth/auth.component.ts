@@ -6,9 +6,9 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { RippleModule } from 'primeng/ripple';
-import { AppFloatingConfigurator } from '../../layout/component/app.floatingconfigurator';
-import { LoginService } from '../../Services/login.service';
-import { LoginRequest } from '../../Services/loginRequest';
+import { AppFloatingConfigurator } from '../../Admin/layout/component/app.floatingconfigurator';
+import { LoginService } from '../../Admin/Services/login.service';
+import { LoginRequest } from '../../Admin/Services/loginRequest';
 import { User } from '../../../models/user';
 
 @Component({

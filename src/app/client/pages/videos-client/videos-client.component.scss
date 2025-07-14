@@ -1,0 +1,226 @@
+.videos-container {
+  @apply space-y-6;
+}
+
+.videos-header {
+  @apply text-center mb-6;
+  
+  .videos-title {
+    @apply text-2xl font-bold text-surface-800 mb-2 flex items-center justify-center;
+  }
+  
+  .videos-subtitle {
+    @apply text-surface-600;
+  }
+}
+
+.loading-container {
+  @apply flex flex-col items-center justify-center py-12;
+  
+  .loading-text {
+    @apply mt-4 text-surface-600 font-medium;
+  }
+}
+
+.videos-content {
+  .videos-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
+  }
+}
+
+.video-card {
+  @apply cursor-pointer transition-all duration-300 hover:transform hover:scale-105;
+  
+  &.video-selected {
+    transform: scale(1.02);
+    
+    :host ::ng-deep .p-card {
+      border-color: var(--primary-500);
+      box-shadow: 0 0 0 2px rgba(var(--primary-500), 0.2);
+    }
+  }
+  
+  :host ::ng-deep .video-card-content {
+    .p-card {
+      @apply h-full border border-surface-200 hover:border-primary-300 transition-all duration-300;
+      
+      .p-card-body {
+        @apply p-0;
+      }
+    }
+  }
+}
+
+.video-thumbnail {
+  @apply relative overflow-hidden;
+  aspect-ratio: 16/9;
+  
+  .thumbnail-image {
+    @apply w-full h-full object-cover transition-transform duration-300;
+  }
+  
+  .play-overlay {
+    @apply absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300;
+    
+    i {
+      @apply text-4xl text-white;
+    }
+  }
+  
+  .duration-badge {
+    @apply absolute bottom-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded;
+  }
+  
+  .status-badge {
+    @apply absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center text-white;
+    
+    &.completed {
+      @apply bg-green-500;
+    }
+    
+    &.pending {
+      @apply bg-orange-500;
+    }
+  }
+}
+
+.video-info {
+  @apply p-4 space-y-3;
+  
+  .video-title {
+    @apply text-lg font-semibold text-surface-800 line-clamp-2;
+  }
+  
+  .video-description {
+    @apply text-sm text-surface-600 line-clamp-3;
+  }
+  
+  .video-meta {
+    @apply flex items-center justify-between text-xs text-surface-500;
+  }
+  
+  .video-progress {
+    @apply space-y-2;
+    
+    .progress-info {
+      @apply flex justify-between text-xs;
+      
+      .progress-label {
+        @apply text-surface-600;
+      }
+      
+      .progress-percentage {
+        @apply text-primary-600 font-medium;
+      }
+    }
+  }
+}
+
+.video-actions {
+  @apply p-4 pt-0;
+}
+
+.empty-state {
+  @apply flex justify-center py-12;
+  
+  .empty-content {
+    @apply text-center max-w-md;
+    
+    .empty-icon {
+      @apply text-6xl text-surface-300 mb-4;
+    }
+    
+    .empty-title {
+      @apply text-xl font-semibold text-surface-700 mb-2;
+    }
+    
+    .empty-message {
+      @apply text-surface-600;
+    }
+  }
+}
+
+.video-player-dialog {
+  :host ::ng-deep .p-dialog {
+    .p-dialog-header {
+      @apply border-b border-surface-200;
+      
+      .dialog-header {
+        @apply flex items-center justify-between w-full;
+        
+        h3 {
+          @apply text-lg font-semibold text-surface-800;
+        }
+      }
+    }
+  }
+}
+
+.video-player-content {
+  @apply space-y-4;
+  
+  .video-player-placeholder {
+    @apply bg-surface-100 rounded-lg p-12 text-center;
+    aspect-ratio: 16/9;
+    
+    .placeholder-icon {
+      @apply text-6xl text-surface-400 mb-4;
+    }
+  }
+  
+  .video-details {
+    h4 {
+      @apply text-lg font-semibold text-surface-800 mb-2;
+    }
+    
+    p {
+      @apply text-surface-600;
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .videos-grid {
+    @apply grid-cols-1;
+  }
+  
+  .video-card {
+    &:hover {
+      transform: none;
+    }
+  }
+}
+
+// Estilos personalizados para PrimeNG
+:host ::ng-deep .custom-spinner {
+  .p-progress-spinner-circle {
+    stroke: var(--primary-500);
+  }
+}
+
+:host ::ng-deep .custom-progress {
+  .p-progressbar {
+    height: 4px;
+    background: var(--surface-200);
+    
+    .p-progressbar-value {
+      background: linear-gradient(90deg, var(--primary-500), var(--primary-600));
+    }
+  }
+}
+
+// Utility classes
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

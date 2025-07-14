@@ -1,0 +1,79 @@
+<header class="header-container">
+  <div class="header-content">
+    <!-- Left Section: Menu Toggle + Logo -->
+    <div class="header-left">
+      <button 
+        class="menu-toggle-btn"
+        (click)="toggleSidebar()"
+        pButton
+        pRipple>
+        <i class="pi pi-bars"></i>
+      </button>
+      
+      <div class="logo-section">
+<img src="assets/images/logo.webp" alt="" width="90" height="60">
+
+      </div>
+    </div>
+
+    <!-- Center Section: Search (opcional) -->
+    <div class="header-center">
+      <div class="search-container">
+        <span class="p-input-icon-left">
+          <i class="pi pi-search"></i>
+          <input 
+            type="text" 
+            pInputText 
+            placeholder="Buscar cursos..."
+            class="search-input">
+        </span>
+      </div>
+    </div>
+
+    <!-- Right Section: Notifications + Profile -->
+    <div class="header-right">
+      <!-- Notifications -->
+      <div class="notification-wrapper">
+        <p-button 
+          icon="pi pi-bell" 
+          [badge]="notificationCount > 0 ? notificationCount.toString() : ''"
+          badgeClass="p-badge-danger notification-badge"
+          [text]="true" 
+          [rounded]="true"
+          class="notification-btn"
+          (onClick)="showNotifications()">
+        </p-button>
+      </div>
+
+      <!-- Profile Dropdown -->
+      <div class="profile-wrapper">
+        <p-button 
+          [text]="true" 
+          [rounded]="true"
+          class="profile-btn"
+          (onClick)="profileMenu.toggle($event)">
+          <div class="profile-content">
+            <p-avatar 
+              [image]="userProfile.avatar" 
+              [label]="userProfile.initials"
+              size="normal" 
+              shape="circle"
+              class="profile-avatar">
+            </p-avatar>
+            <div class="profile-info">
+              <span class="profile-name">{{userProfile.name}}</span>
+              <i class="pi pi-chevron-down profile-arrow"></i>
+            </div>
+          </div>
+        </p-button>
+
+        <p-menu 
+          #profileMenu 
+          [model]="profileMenuItems" 
+          [popup]="true"
+          styleClass="profile-menu">
+        </p-menu>
+      </div>
+    </div>
+  </div>
+</header>

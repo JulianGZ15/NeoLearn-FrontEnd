@@ -1,0 +1,219 @@
+.preguntas-container {
+  @apply space-y-6;
+}
+
+.preguntas-header {
+  @apply bg-white rounded-lg shadow-sm p-6 border border-surface-200;
+  
+  .header-content {
+    @apply flex items-center justify-between;
+    
+    .header-info {
+      .preguntas-title {
+        @apply text-2xl font-bold text-surface-800 mb-2 flex items-center;
+      }
+      
+      .preguntas-subtitle {
+        @apply text-surface-600;
+      }
+    }
+  }
+}
+
+.loading-container {
+  @apply flex flex-col items-center justify-center py-12;
+  
+  .loading-text {
+    @apply mt-4 text-surface-600 font-medium;
+  }
+}
+
+.nueva-pregunta-form {
+  :host ::ng-deep .p-card {
+    .form-header {
+      @apply flex items-center justify-between;
+      
+      h3 {
+        @apply text-lg font-semibold text-surface-800;
+      }
+    }
+    
+    .form-content {
+      @apply space-y-4;
+      
+      .form-field {
+        .field-label {
+          @apply block text-sm font-medium text-surface-700 mb-2;
+        }
+      }
+      
+      .form-actions {
+        @apply flex justify-end gap-3;
+      }
+    }
+  }
+}
+
+.preguntas-content {
+  .empty-state {
+    @apply flex justify-center py-12;
+    
+    .empty-content {
+      @apply text-center max-w-md;
+      
+      .empty-icon {
+        @apply text-6xl text-surface-300 mb-4;
+      }
+      
+      .empty-title {
+        @apply text-xl font-semibold text-surface-700 mb-2;
+      }
+      
+      .empty-message {
+        @apply text-surface-600 mb-4;
+      }
+    }
+  }
+  
+  .preguntas-list {
+    @apply space-y-4;
+  }
+}
+
+.pregunta-item {
+  :host ::ng-deep .pregunta-card {
+    .p-card {
+      @apply border border-surface-200 hover:border-primary-300 transition-colors duration-200;
+      
+      .p-card-body {
+        @apply p-6;
+      }
+    }
+  }
+  
+  .pregunta-header {
+    @apply flex items-start justify-between mb-4;
+    
+    .autor-info {
+      @apply flex items-center gap-3;
+      
+      .autor-details {
+        @apply flex flex-col;
+        
+        .autor-nombre {
+          @apply font-medium text-surface-800;
+        }
+        
+        .pregunta-fecha {
+          @apply text-sm text-surface-500;
+        }
+      }
+    }
+  }
+  
+  .pregunta-content {
+    @apply mb-4;
+    
+    p {
+      @apply text-surface-700 leading-relaxed;
+    }
+  }
+  
+  .pregunta-footer {
+    @apply flex items-center justify-between;
+  }
+}
+
+.respuestas-section {
+  @apply mt-4;
+  
+  .respuestas-loading {
+    @apply flex items-center justify-center py-4;
+  }
+  
+  .respuestas-list {
+    @apply space-y-4;
+    
+    .no-respuestas {
+      @apply text-center py-4;
+    }
+    
+    .respuesta-item {
+      @apply bg-surface-50 rounded-lg p-4 border-l-4 border-green-500;
+      
+      .respuesta-header {
+        @apply flex items-start justify-between mb-2;
+        
+        .respuesta-autor {
+          @apply flex items-center gap-2;
+          
+          .respuesta-autor-info {
+            @apply flex flex-col;
+            
+            .respuesta-autor-nombre {
+              @apply font-medium text-surface-800 text-sm;
+            }
+            
+            .respuesta-fecha {
+              @apply text-xs text-surface-500;
+            }
+          }
+        }
+      }
+      
+      .respuesta-content {
+        p {
+          @apply text-surface-700 text-sm leading-relaxed;
+        }
+      }
+    }
+  }
+}
+
+.respuesta-modal {
+  @apply space-y-4;
+  
+  .pregunta-original {
+    h4 {
+      @apply text-lg font-semibold text-surface-800 mb-2;
+    }
+    
+    .pregunta-texto {
+      @apply text-surface-600 bg-surface-50 p-3 rounded-lg;
+    }
+  }
+  
+  .form-field {
+    .field-label {
+      @apply block text-sm font-medium text-surface-700 mb-2;
+    }
+  }
+  
+  .form-actions {
+    @apply flex justify-end gap-3 mt-4;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .preguntas-header {
+    .header-content {
+      @apply flex-col items-start gap-4;
+    }
+  }
+  
+  .pregunta-header {
+    @apply flex-col gap-3;
+  }
+  
+  .pregunta-footer {
+    @apply flex-col gap-3;
+  }
+}
+
+// Estilos personalizados para PrimeNG
+:host ::ng-deep .custom-spinner {
+  .p-progress-spinner-circle {
+    stroke: var(--primary-500);
+  }
+}

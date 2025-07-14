@@ -1,0 +1,273 @@
+<div class="preguntas-container">
+  <!-- Header -->
+  <div class="preguntas-header">
+    <div class="header-content">
+      <div class="header-info">
+        <h2 class="preguntas-title">
+          <i class="pi pi-question-circle mr-2"></i>
+          Preguntas y Respuestas
+        </h2>
+        <p class="preguntas-subtitle">
+          Comparte tus dudas y ayuda a otros estudiantes
+        </p>
+      </div>
+      
+      <p-button 
+        label="Nueva Pregunta" 
+        icon="pi pi-plus"
+        (onClick)="mostrarFormularioNuevaPregunta()"
+        [disabled]="mostrarFormularioPregunta">
+      </p-button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <p-progressSpinner 
+      strokeWidth="4" 
+      animationDuration="1s"
+      styleClass="custom-spinner">
+    </p-progressSpinner>
+    <p class="loading-text">Cargando preguntas...</p>
+  </div>
+
+  <!-- Formulario Nueva Pregunta -->
+  <div *ngIf="mostrarFormularioPregunta" class="nueva-pregunta-form">
+    <p-card>
+      <ng-template #header>
+        <div class="form-header">
+          <h3>Nueva Pregunta</h3>
+          <p-button 
+            icon="pi pi-times" 
+            [text]="true" 
+            [rounded]="true"
+            (onClick)="cancelarNuevaPregunta()">
+          </p-button>
+        </div>
+      </ng-template>
+
+      <form (ngSubmit)="enviarPregunta()">
+        <div class="form-content">
+          <div class="form-field">
+            <label class="field-label">Tu pregunta</label>
+            <textarea 
+              pInputTextarea 
+              [(ngModel)]="nuevaPregunta.contenido"
+              name="contenido"
+              rows="4"
+              placeholder="Describe tu pregunta de forma clara y detallada..."
+              class="w-full"
+              [disabled]="enviandoPregunta">
+            </textarea>
+          </div>
+          
+          <div class="form-actions">
+            <p-button 
+              label="Cancelar" 
+              [outlined]="true"
+              [disabled]="enviandoPregunta"
+              (onClick)="cancelarNuevaPregunta()">
+            </p-button>
+            
+            <p-button 
+              label="Enviar Pregunta" 
+              type="submit"
+              [loading]="enviandoPregunta"
+              [disabled]="!nuevaPregunta.contenido?.trim()">
+            </p-button>
+          </div>
+        </div>
+      </form>
+    </p-card>
+  </div>
+
+  <!-- Lista de Preguntas -->
+  <div *ngIf="!loading" class="preguntas-content">
+    <div *ngIf="preguntas.length === 0" class="empty-state">
+      <div class="empty-content">
+        <i class="pi pi-question-circle empty-icon"></i>
+        <h3 class="empty-title">No hay preguntas aún</h3>
+        <p class="empty-message">
+          Sé el primero en hacer una pregunta sobre este curso
+        </p>
+        <p-button 
+          label="Hacer Primera Pregunta" 
+          icon="pi pi-plus"
+          (onClick)="mostrarFormularioNuevaPregunta()">
+        </p-button>
+      </div>
+    </div>
+
+    <div *ngIf="preguntas.length > 0" class="preguntas-list">
+      <div *ngFor="let pregunta of preguntas" class="pregunta-item">
+        <p-card styleClass="pregunta-card">
+          <!-- Pregunta Header -->
+          <div class="pregunta-header">
+            <div class="autor-info">
+              <p-avatar 
+                [label]="obtenerIniciales(pregunta.usuario?.nombre)"
+                size="normal" 
+                shape="circle"
+                [style]="{'background-color': '#3b82f6', 'color': 'white'}">
+              </p-avatar>
+              
+              <div class="autor-details">
+                <span class="autor-nombre">{{pregunta.usuario?.nombre || 'Usuario'}}</span>
+                <span class="pregunta-fecha">{{formatearFecha(pregunta.fecha)}}</span>
+              </div>
+            </div>
+            
+            <div class="pregunta-actions" *ngIf="esAutorPregunta(pregunta)">
+              <p-button 
+                icon="pi pi-trash" 
+                [text]="true" 
+                [rounded]="true"
+                severity="danger"
+                size="small"
+                (onClick)="eliminarPregunta(pregunta)">
+              </p-button>
+            </div>
+          </div>
+
+          <!-- Pregunta Content -->
+          <div class="pregunta-content">
+            <p>{{pregunta.contenido}}</p>
+          </div>
+
+          <!-- Pregunta Footer -->
+          <div class="pregunta-footer">
+            <p-button 
+              [label]="pregunta.mostrarRespuestas ? 'Ocultar Respuestas' : 'Ver Respuestas'"
+              [icon]="pregunta.mostrarRespuestas ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
+              [text]="true"
+              size="small"
+              [badge]="pregunta.respuestas.length.toString()"
+              (onClick)="toggleRespuestas(pregunta)">
+            </p-button>
+            
+            <p-button 
+              label="Responder" 
+              icon="pi pi-reply"
+              [outlined]="true"
+              size="small"
+              (onClick)="responderPregunta(pregunta)">
+            </p-button>
+          </div>
+
+          <!-- Respuestas Section -->
+          <div *ngIf="pregunta.mostrarRespuestas" class="respuestas-section">
+            <p-divider></p-divider>
+            
+            <!-- Loading Respuestas -->
+            <div *ngIf="pregunta.cargandoRespuestas" class="respuestas-loading">
+              <p-progressSpinner 
+                strokeWidth="4" 
+                animationDuration="1s"
+                [style]="{'width': '30px', 'height': '30px'}">
+              </p-progressSpinner>
+              <span class="ml-2">Cargando respuestas...</span>
+            </div>
+
+            <!-- Lista de Respuestas -->
+            <div *ngIf="!pregunta.cargandoRespuestas" class="respuestas-list">
+              <div *ngIf="pregunta.respuestas.length === 0" class="no-respuestas">
+                <p class="text-muted-color">No hay respuestas aún. ¡Sé el primero en responder!</p>
+              </div>
+
+              <div *ngFor="let respuesta of pregunta.respuestas" class="respuesta-item">
+                <div class="respuesta-header">
+                  <div class="respuesta-autor">
+                    <p-avatar 
+                      [label]="obtenerInicialesRespuesta(respuesta)"
+                      size="normal" 
+                      shape="circle"
+                      [style]="{'background-color': '#10b981', 'color': 'white'}">
+                    </p-avatar>
+                    
+                    <div class="respuesta-autor-info">
+                    <span class="respuesta-autor-nombre">{{obtenerNombreUsuarioRespuesta(respuesta)}}</span>
+                      <span class="respuesta-fecha">{{formatearFecha(respuesta.fecha)}}</span>
+                    </div>
+                  </div>
+                  
+                  <div class="respuesta-actions" *ngIf="esAutorRespuesta(respuesta)">
+                    <p-button 
+                      icon="pi pi-trash" 
+                      [text]="true" 
+                      [rounded]="true"
+                      severity="danger"
+                      size="small"
+                      (onClick)="eliminarRespuesta(respuesta, pregunta)">
+                    </p-button>
+                  </div>
+                </div>
+                
+                <div class="respuesta-content">
+                  <p>{{respuesta.contenido}}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </p-card>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Respuesta -->
+<p-dialog 
+  [(visible)]="mostrarModalRespuesta"
+  [modal]="true"
+  [closable]="true"
+  [style]="{width: '600px'}"
+  header="Responder Pregunta"
+  (onHide)="cancelarRespuesta()">
+  
+  <div *ngIf="preguntaSeleccionada" class="respuesta-modal">
+      <!-- Pregunta Original -->
+      <div class="pregunta-original">
+        <h4>Pregunta original:</h4>
+        <p class="pregunta-texto">{{preguntaSeleccionada.contenido}}</p>
+      </div>
+      
+      <p-divider></p-divider>
+      
+      <!-- Formulario Respuesta -->
+      <form (ngSubmit)="enviarRespuesta()">
+        <div class="form-field">
+          <label class="field-label">Tu respuesta</label>
+          <textarea 
+            pInputTextarea 
+            [(ngModel)]="nuevaRespuesta.contenido"
+            name="contenido"
+            rows="4"
+            placeholder="Escribe tu respuesta..."
+            class="w-full"
+            [disabled]="enviandoRespuesta">
+          </textarea>
+        </div>
+        
+        <div class="form-actions">
+          <p-button 
+            label="Cancelar" 
+            [outlined]="true"
+            [disabled]="enviandoRespuesta"
+            (onClick)="cancelarRespuesta()">
+          </p-button>
+          
+          <p-button 
+            label="Enviar Respuesta" 
+            type="submit"
+            [loading]="enviandoRespuesta"
+            [disabled]="!nuevaRespuesta.contenido?.trim()">
+          </p-button>
+        </div>
+      </form>
+    </div>
+  </p-dialog>
+
+  <!-- Toast Messages -->
+  <p-toast position="top-right"></p-toast>
+  
+  <!-- Confirmation Dialog -->
+  <p-confirmDialog></p-confirmDialog>
+</div>
