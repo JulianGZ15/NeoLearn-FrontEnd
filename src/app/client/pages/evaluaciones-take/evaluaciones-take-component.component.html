@@ -1,0 +1,111 @@
+<div class="evaluacion-take-container">
+  <!-- Header con Timer -->
+  <div class="evaluacion-header">
+    <div class="header-info">
+      <h2 class="evaluacion-titulo">{{evaluacion?.titulo}}</h2>
+      <div class="evaluacion-meta">
+        <span>Pregunta {{preguntaActual + 1}} de {{preguntas.length}}</span>
+      </div>
+    </div>
+    
+    <div class="timer-container" *ngIf="tiempoRestante > 0">
+      <p-tag 
+        [value]="formatearTiempo(tiempoRestante)"
+        [severity]="obtenerColorTiempo()"
+        icon="pi pi-clock"
+        styleClass="timer-tag">
+      </p-tag>
+    </div>
+  </div>
+
+  <!-- Progreso -->
+  <div class="progreso-container">
+    <div class="progreso-info">
+      <span class="progreso-label">Progreso</span>
+      <span class="progreso-porcentaje">{{obtenerProgreso()}}%</span>
+    </div>
+    <p-progressBar [value]="obtenerProgreso()" styleClass="custom-progress"></p-progressBar>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-container">
+    <p-progressSpinner strokeWidth="4" animationDuration="1s"></p-progressSpinner>
+    <p class="loading-text">Cargando evaluación...</p>
+  </div>
+
+  <!-- Pregunta Actual -->
+  <div *ngIf="!loading && preguntas.length > 0" class="pregunta-container">
+    <p-card styleClass="pregunta-card">
+      <div class="pregunta-content">
+        <h3 class="pregunta-titulo">
+          {{preguntas[preguntaActual].pregunta}}
+        </h3>
+        
+        <div class="opciones-container">
+          <div 
+            *ngFor="let opcion of preguntas[preguntaActual].opciones" 
+            class="opcion-item"
+            [class.selected]="preguntas[preguntaActual].respuestaSeleccionada === opcion.valor"
+            (click)="seleccionarRespuesta(preguntas[preguntaActual], opcion.valor)">
+            
+            <p-radioButton 
+              [value]="opcion.valor"
+              [(ngModel)]="preguntas[preguntaActual].respuestaSeleccionada"
+              [inputId]="'opcion_' + opcion.valor">
+            </p-radioButton>
+            
+            <label [for]="'opcion_' + opcion.valor" class="opcion-label">
+              <span class="opcion-letra">{{opcion.valor}}</span>
+              <span class="opcion-texto">{{opcion.texto}}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </p-card>
+  </div>
+
+  <!-- Navegación -->
+  <div *ngIf="!loading" class="navegacion-container">
+    <div class="navegacion-botones">
+      <p-button 
+        label="Anterior"
+        icon="pi pi-chevron-left"
+        [outlined]="true"
+        [disabled]="preguntaActual === 0"
+        (onClick)="preguntaAnterior()">
+      </p-button>
+      
+      <div class="preguntas-navegacion">
+        <p-button 
+          *ngFor="let pregunta of preguntas; let i = index"
+          [label]="(i + 1).toString()"
+          [outlined]="i !== preguntaActual"
+          [severity]="esPreguntaRespondida(i) ? 'success' : 'secondary'"
+          size="small"
+          (onClick)="irAPregunta(i)"
+          [class.current]="i === preguntaActual">
+        </p-button>
+      </div>
+      
+      <p-button 
+        *ngIf="preguntaActual < preguntas.length - 1"
+        label="Siguiente"
+        icon="pi pi-chevron-right"
+        iconPos="right"
+        (onClick)="siguientePregunta()">
+      </p-button>
+      
+      <p-button 
+        *ngIf="preguntaActual === preguntas.length - 1"
+        label="Enviar Evaluación"
+        icon="pi pi-send"
+        severity="success"
+        [loading]="enviando"
+        (onClick)="enviarEvaluacion()">
+      </p-button>
+    </div>
+  </div>
+
+  <p-toast position="top-right"></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+</div>

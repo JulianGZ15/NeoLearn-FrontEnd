@@ -1,0 +1,214 @@
+<div class="resultado-container">
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-container">
+    <p-progressSpinner strokeWidth="4" animationDuration="1s"></p-progressSpinner>
+    <p class="loading-text">Cargando resultado...</p>
+  </div>
+
+  <!-- Contenido Principal -->
+  <div *ngIf="!loading && estadisticas" class="resultado-content">
+    <!-- Header con Resultado -->
+    <div class="resultado-header">
+      <div class="resultado-info">
+        <h2 class="evaluacion-titulo">{{evaluacion?.titulo}}</h2>
+        <p class="evaluacion-subtitulo">Resultado de la evaluación</p>
+      </div>
+      
+      <div class="calificacion-principal">
+        <div class="calificacion-circle" [class]="estadisticas.estado">
+          <span class="calificacion-numero">{{estadisticas.calificacion}}%</span>
+          <span class="calificacion-texto">{{estadisticas.estado | titlecase}}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mensaje de Estado -->
+    <div class="estado-mensaje" [class]="estadisticas.estado">
+      <i [class]="obtenerIconoEstado(estadisticas.estado)"></i>
+      <span>{{obtenerMensajeEstado(estadisticas.estado)}}</span>
+    </div>
+
+    <!-- Estadísticas Generales -->
+    <div class="estadisticas-container">
+      <p-card>
+        <ng-template #header>
+          <h3>Resumen de Resultados</h3>
+        </ng-template>
+        
+        <div class="estadisticas-grid">
+          <div class="estadistica-item">
+            <div class="estadistica-valor">{{estadisticas.totalPreguntas}}</div>
+            <div class="estadistica-label">Total de Preguntas</div>
+          </div>
+          
+          <div class="estadistica-item correctas">
+            <div class="estadistica-valor">{{estadisticas.respuestasCorrectas}}</div>
+            <div class="estadistica-label">Respuestas Correctas</div>
+          </div>
+          
+          <div class="estadistica-item incorrectas">
+            <div class="estadistica-valor">{{estadisticas.respuestasIncorrectas}}</div>
+            <div class="estadistica-label">Respuestas Incorrectas</div>
+          </div>
+          
+          <div class="estadistica-item">
+            <div class="estadistica-valor">{{estadisticas.porcentajeAcierto}}%</div>
+            <div class="estadistica-label">Porcentaje de Acierto</div>
+          </div>
+        </div>
+        
+        <!-- Barra de Progreso Visual -->
+        <div class="progreso-visual">
+          <div class="progreso-info">
+            <span class="progreso-label">Progreso de Respuestas</span>
+            <span class="progreso-porcentaje">{{estadisticas.porcentajeAcierto}}%</span>
+          </div>
+          <p-progressBar 
+            [value]="estadisticas.porcentajeAcierto"
+            [showValue]="false"
+            styleClass="resultado-progress">
+          </p-progressBar>
+        </div>
+      </p-card>
+    </div>
+
+    <!-- Información Adicional -->
+    <div class="info-adicional">
+      <p-card>
+        <div class="info-grid">
+          <div class="info-item">
+            <i class="pi pi-calendar info-icon"></i>
+            <div>
+              <div class="info-label">Fecha de Realización</div>
+              <div class="info-valor">{{formatearFecha(resultado?.fecha || '')}}</div>
+            </div>
+          </div>
+          
+          <div class="info-item" *ngIf="evaluacion?.duracion_minutos">
+            <i class="pi pi-clock info-icon"></i>
+            <div>
+              <div class="info-label">Duración</div>
+              <div class="info-valor">{{evaluacion?.duracion_minutos}} minutos</div>
+            </div>
+          </div>
+        </div>
+      </p-card>
+    </div>
+
+    <!-- Acciones Principales -->
+    <div class="acciones-principales">
+      <p-button 
+        label="Ver Respuestas Detalladas"
+        icon="pi pi-eye"
+        [outlined]="true"
+        (onClick)="toggleMostrarRespuestas()"
+        class="flex-1">
+      </p-button>
+      
+      <p-button 
+        label="Repetir Evaluación"
+        icon="pi pi-refresh"
+        (onClick)="repetirEvaluacion()"
+        class="flex-1">
+      </p-button>
+      
+      <p-button 
+        label="Volver a Lista"
+        icon="pi pi-arrow-left"
+        severity="secondary"
+        (onClick)="volverALista()"
+        class="flex-1">
+      </p-button>
+    </div>
+
+    <!-- Revisión Detallada de Respuestas -->
+    <div *ngIf="mostrarRespuestas" class="respuestas-detalladas">
+      <p-card>
+        <ng-template #header>
+          <div class="respuestas-header">
+            <h3>Revisión Detallada</h3>
+            <p-dropdown 
+              [(ngModel)]="filtroRespuestas"
+              [options]="[
+                {label: 'Todas las respuestas', value: 'todas'},
+                {label: 'Solo correctas', value: 'correctas'},
+                {label: 'Solo incorrectas', value: 'incorrectas'}
+              ]"
+              optionLabel="label"
+              optionValue="value"
+              styleClass="filtro-respuestas">
+            </p-dropdown>
+          </div>
+        </ng-template>
+        
+        <div class="preguntas-revision">
+          <div *ngFor="let pregunta of preguntasFiltradas; let i = index" 
+               class="pregunta-revision"
+               [class.correcta]="pregunta.esCorrecta"
+               [class.incorrecta]="!pregunta.esCorrecta">
+            
+            <!-- Header de Pregunta -->
+            <div class="pregunta-header">
+              <div class="pregunta-numero">
+                <span class="numero">{{i + 1}}</span>
+                <i [class]="obtenerIconoPregunta(pregunta.esCorrecta)"
+                   [ngClass]="{
+                     'text-green-500': pregunta.esCorrecta,
+                     'text-red-500': !pregunta.esCorrecta
+                   }">
+                </i>
+              </div>
+              
+              <p-tag 
+                [value]="pregunta.esCorrecta ? 'Correcta' : 'Incorrecta'"
+                [severity]="obtenerColorPregunta(pregunta.esCorrecta)"
+                styleClass="estado-pregunta">
+              </p-tag>
+            </div>
+            
+            <!-- Pregunta -->
+            <div class="pregunta-texto">
+              <h4>{{pregunta.pregunta}}</h4>
+            </div>
+            
+            <!-- Opciones -->
+            <div class="opciones-revision">
+              <div *ngFor="let opcion of pregunta.opciones" 
+                   class="opcion-revision"
+                   [class.seleccionada]="opcion.seleccionada"
+                   [class.correcta]="opcion.esCorrecta"
+                   [class.incorrecta]="opcion.seleccionada && !opcion.esCorrecta">
+                
+                <div class="opcion-header">
+                  <span class="opcion-letra">{{opcion.valor}}</span>
+                  <span class="opcion-texto">{{opcion.texto}}</span>
+                </div>
+                
+                <div class="opcion-indicadores">
+                  <i *ngIf="opcion.seleccionada" 
+                     class="pi pi-user indicador-usuario"
+                     pTooltip="Tu respuesta">
+                  </i>
+                  <i *ngIf="opcion.esCorrecta" 
+                     class="pi pi-check indicador-correcto"
+                     pTooltip="Respuesta correcta">
+                  </i>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Explicación (si no es correcta) -->
+            <div *ngIf="!pregunta.esCorrecta" class="explicacion-container">
+              <p class="explicacion-texto">
+                <i class="pi pi-info-circle mr-2"></i>
+                La respuesta correcta es: <strong>{{pregunta.respuesta_correcta}}) {{pregunta.textoOpcionCorrecta}}</strong>
+              </p>
+            </div>
+          </div>
+        </div>
+      </p-card>
+    </div>
+  </div>
+
+  <p-toast position="top-right"></p-toast>
+</div>

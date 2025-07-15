@@ -21,9 +21,11 @@ import { MainLayoutComponent } from './app/client/layout/main-layout/main-layout
 import { DashboardClientComponent } from './app/client/pages/dashboard/dashboard.component';
 import { DetalleCursoComponent } from './app/client/pages/detalle-curso/detalle-curso.component';
 import { VideosClientComponent } from './app/client/pages/videos-client/videos-client.component';
-import { EvaluacionesClientComponent } from './app/client/pages/evaluaciones-client/evaluaciones-client.component';
 import { PreguntasClientComponent } from './app/client/pages/preguntas-client/preguntas-client.component';
 import { ClaseEnVivoClientComponent } from './app/client/pages/clase-en-vivo-client/clase-en-vivo-client.component';
+import { EvaluacionesListComponent } from './app/client/pages/evaluaciones-list/evaluaciones-list-component.component';
+import { EvaluacionesTakeComponent } from './app/client/pages/evaluaciones-take/evaluaciones-take-component.component';
+import { EvaluacionesResultComponent } from './app/client/pages/evaluaciones-result/evaluaciones-result-component.component';
 
 export const appRoutes: Routes = [
     {
@@ -81,10 +83,12 @@ export const appRoutes: Routes = [
       { path: 'dashboard', component: DashboardClientComponent },
       { path: 'curso-detalle/:id', component:DetalleCursoComponent},
       { path: 'curso/videos/:id', component:VideosClientComponent},
-      { path: 'curso/evluaciones/:id', component:EvaluacionesClientComponent},
       { path: 'curso/preguntas/:id', component:PreguntasClientComponent},
       { path: 'curso/clases/:id', component:ClaseEnVivoClientComponent},
       { path: 'curso/clase-vivo/:idClase', component: VideoLlamadaComponent},
+      { path: 'curso/:cursoId/evaluaciones', component: EvaluacionesListComponent },
+      { path: 'curso/evaluacion/:id/tomar', component: EvaluacionesTakeComponent },
+      { path: 'curso/evaluacion/:id/resultado', component: EvaluacionesResultComponent }
 
       // Otras rutas...
     ]

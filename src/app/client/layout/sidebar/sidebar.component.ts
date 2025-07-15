@@ -37,7 +37,7 @@ export class SidebarComponent implements OnInit {
 
   isMobile = false;
   overallProgress = 68;
-  idCurso: string | null = null;
+  cursoId: string | null = null;
 
   learningMenuItems: NavItem[] = [];
   exploreMenuItems: NavItem[] = [];
@@ -52,28 +52,28 @@ export class SidebarComponent implements OnInit {
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe(() => {
-        this.idCurso = this.getCursoIdFromRoute();
-        this.updateMenu(this.router.url, this.idCurso);
+        this.cursoId = this.getCursoIdFromRoute();
+        this.updateMenu(this.router.url, this.cursoId);
       });
 
     // Inicialización directa
-    this.idCurso = this.getCursoIdFromRoute();
-    this.updateMenu(this.router.url, this.idCurso);
+    this.cursoId = this.getCursoIdFromRoute();
+    this.updateMenu(this.router.url, this.cursoId);
   }
 
   private getCursoIdFromRoute(): string | null {
     let route = this.route.root;
     while (route.firstChild) {
       route = route.firstChild;
-      const idCurso = route.snapshot.paramMap.get('idCurso');
-      if (idCurso) {
-        return idCurso;
-      }
+      const cursoId = route.snapshot.paramMap.get('id') || route.snapshot.paramMap.get('cursoId');
+      if (cursoId) {
+        return cursoId;
+      } 
     }
     return null;
   }
 
-  private updateMenu(url: string, idCurso: string | null) {
+  private updateMenu(url: string, cursoId: string | null) {
     if (url.startsWith('/client/dashboard')) {
       this.learningMenuItems = [
         {
@@ -105,33 +105,33 @@ export class SidebarComponent implements OnInit {
           routerLink: ['/client/certificates']
         }
       ];
-    } else if (url.startsWith('/client/curso/') && idCurso) {
+    } else if (url.startsWith(`/client/curso/`)) {
       this.learningMenuItems = [
         {
           label: 'Videos',
           icon: 'pi pi-play',
-          routerLink: ['/client/curso', idCurso, 'videos'],
+          routerLink: [`/client/curso/videos/${this.cursoId}`],
           badge: '2',
           badgeClass: 'badge-success'
         },
         {
           label: 'Preguntas',
           icon: 'pi pi-question',
-          routerLink: ['/client/curso', idCurso, 'preguntas'],
+          routerLink: [`/client/curso/preguntas/${this.cursoId}`],
           badge: '2',
           badgeClass: 'badge-success'
         },
         {
           label: 'Clases en Vivo',
           icon: 'pi pi-video',
-          routerLink: ['/client/curso', idCurso, 'live-classes'],
+          routerLink: [`/client/curso/clases/${this.cursoId}`],
           badge: '2',
           badgeClass: 'badge-success'
         },
         {
           label: 'Evaluaciones',
           icon: 'pi pi-file-edit',
-          routerLink: ['/client/curso', idCurso, 'assessments']
+          routerLink: [`/client/curso/${this.cursoId}/evaluaciones`],
         }
       ];
 
@@ -139,7 +139,7 @@ export class SidebarComponent implements OnInit {
         {
           label: 'Certificados',
           icon: 'pi pi-verified',
-          routerLink: ['/client/curso', idCurso, 'certificates']
+          routerLink: ['/client/curso', cursoId, 'certificates']
         }
       ];
 

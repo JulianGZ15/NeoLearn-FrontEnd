@@ -1,0 +1,107 @@
+<div class="evaluaciones-container">
+  <!-- Header -->
+  <div class="evaluaciones-header">
+    <h2 class="evaluaciones-title">
+      <i class="pi pi-file-edit mr-2"></i>
+      Evaluaciones del Curso
+    </h2>
+    <p class="evaluaciones-subtitle">
+      Completa las evaluaciones para medir tu progreso
+    </p>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-container">
+    <p-progressSpinner strokeWidth="4" animationDuration="1s"></p-progressSpinner>
+    <p class="loading-text">Cargando evaluaciones...</p>
+  </div>
+
+  <!-- Evaluaciones List -->
+  <div *ngIf="!loading" class="evaluaciones-content">
+    <div *ngIf="evaluaciones.length === 0" class="empty-state">
+      <i class="pi pi-file-edit empty-icon"></i>
+      <h3 class="empty-title">No hay evaluaciones disponibles</h3>
+      <p class="empty-message">Este curso aún no tiene evaluaciones publicadas.</p>
+    </div>
+
+    <div *ngIf="evaluaciones.length > 0" class="evaluaciones-grid">
+      <div *ngFor="let evaluacion of evaluaciones" class="evaluacion-card">
+        <p-card styleClass="evaluacion-card-content">
+          <!-- Header -->
+          <div class="evaluacion-header">
+            <div class="evaluacion-info">
+              <h3 class="evaluacion-titulo">{{evaluacion.titulo}}</h3>
+              <div class="evaluacion-meta">
+                <span class="meta-item">
+                  <i class="pi pi-clock mr-1"></i>
+                  {{formatearDuracion(evaluacion.duracion_minutos || 0)}}
+                </span>
+                <span class="meta-item" *ngIf="evaluacion.intentos > 0">
+                  <i class="pi pi-refresh mr-1"></i>
+                  {{evaluacion.intentos}} intento(s)
+                </span>
+              </div>
+            </div>
+            
+            <div class="evaluacion-estado">
+              <i [class]="obtenerIconoEstado(evaluacion)"
+                 [ngClass]="{
+                   'text-green-500': evaluacion.completada && evaluacion.calificacion! >= 60,
+                   'text-red-500': evaluacion.completada && evaluacion.calificacion! < 60,
+                   'text-blue-500': !evaluacion.completada
+                 }">
+              </i>
+            </div>
+          </div>
+
+          <!-- Resultado -->
+          <div *ngIf="evaluacion.completada" class="evaluacion-resultado">
+            <div class="resultado-info">
+              <span class="resultado-label">Calificación:</span>
+              <p-tag 
+                [value]="evaluacion.calificacion + '%'"
+                [severity]="obtenerColorCalificacion(evaluacion.calificacion!)"
+                styleClass="calificacion-tag">
+              </p-tag>
+            </div>
+            <div class="resultado-fecha" *ngIf="evaluacion.fechaCompletada">
+              <span class="text-sm text-muted-color">
+                Completada: {{evaluacion.fechaCompletada | date:'medium'}}
+              </span>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="evaluacion-actions">
+            <p-button 
+              *ngIf="!evaluacion.completada"
+              label="Iniciar Evaluación"
+              icon="pi pi-play"
+              (onClick)="iniciarEvaluacion(evaluacion)"
+              class="w-full">
+            </p-button>
+            
+            <div *ngIf="evaluacion.completada" class="completed-actions">
+              <p-button 
+                label="Ver Resultado"
+                icon="pi pi-eye"
+                [outlined]="true"
+                (onClick)="verResultado(evaluacion)"
+                class="flex-1">
+              </p-button>
+              
+              <p-button 
+                label="Reintentar"
+                icon="pi pi-refresh"
+                (onClick)="iniciarEvaluacion(evaluacion)"
+                class="flex-1">
+              </p-button>
+            </div>
+          </div>
+        </p-card>
+      </div>
+    </div>
+  </div>
+
+  <p-toast position="top-right"></p-toast>
+</div>
